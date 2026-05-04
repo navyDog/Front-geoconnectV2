@@ -74,6 +74,7 @@ function QuoteTunnel() {
         prenom: data.prenom,
         utilisateurId: authRes.userId,
         adresseFacturation: {
+          rue: data.rue || "Non renseigné",
           ville: data.ville,
           codePostal: data.codePostal // Simple mapping for MVP
         }
@@ -86,6 +87,7 @@ function QuoteTunnel() {
         typeProjet: data.typeProjet,
         description: data.description,
         adresseProjet: {
+          rue: data.rueProjet || "Non renseigné",
           codePostal: data.codePostal,
           ville: data.ville,
         }
@@ -140,6 +142,11 @@ function QuoteTunnel() {
                 </select>
                 {errors.typeProjet && <span className="text-red-500 text-xs">Requis</span>}
               </div>
+              <Input
+                label="Rue du projet"
+                placeholder="Ex : 15 Avenue des Champs-Élysées"
+                {...formRegister('rueProjet')}
+              />
               <Input
                 label="Code Postal du projet *"
                 placeholder="Ex : 75001"
@@ -207,6 +214,12 @@ function QuoteTunnel() {
                   error={errors.nom ? "Requis" : undefined}
                 />
               </div>
+              <Input
+                label="Rue (Adresse de facturation) *"
+                placeholder="12 rue de la République"
+                {...formRegister('rue', { required: true })}
+                error={errors.rue ? "Requis" : undefined}
+              />
               <Input
                 type="email"
                 label="Email *"
