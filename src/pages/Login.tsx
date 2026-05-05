@@ -77,6 +77,13 @@ export default function Login() {
             <Button type="submit" className="w-full" isLoading={isLoading}>
               CONNEXION SECURISEE
             </Button>
+
+            <div className="mt-6 text-center border-t border-slate-100 pt-4">
+              <p className="text-xs text-slate-500 mb-2">Vous êtes un Bureau d'Étude Géotechnique ?</p>
+              <Button type="button" variant="outline" className="w-full text-xs" onClick={() => navigate('/bureau-etudes/inscription')}>
+                Créer un compte professionnel
+              </Button>
+            </div>
           </CardFooter>
         </form>
       </Card>

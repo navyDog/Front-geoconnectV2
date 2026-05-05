@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
 import { registerCall } from '../api/auth';
-import { createClient } from '../api/client';
+import { createClient, getAllClients } from '../api/client';
 import { createDemandeDevis } from '../api/demandeDevis';
 import { MapPin, Briefcase, Mail } from 'lucide-react';
 
@@ -69,7 +69,7 @@ function QuoteTunnel() {
       login(authRes);
 
       // 2. Create Client Profile
-      const client = await createClient({
+      let client = await createClient({
         nom: data.nom,
         prenom: data.prenom,
         utilisateurId: authRes.userId,
@@ -80,9 +80,23 @@ function QuoteTunnel() {
         }
       });
 
+      let clientId = client?.id;
+
+      if (!clientId) {
+         // Some APIs return empty responses for 201 Created instead of returning the object.
+         // Let's fetch all clients and locate the one just created.
+         const allClients = await getAllClients();
+         const myClient = allClients.find(c => c.utilisateurId === authRes.userId);
+         if (myClient) {
+            clientId = myClient.id;
+         } else {
+             throw new Error("Client created but could not be located on the server.");
+         }
+      }
+
       // 3. Create DemandeDevis
       await createDemandeDevis({
-        clientId: client.id,
+        clientId: clientId,
         delaiMax: data.delaiMax || undefined,
         typeProjet: data.typeProjet,
         description: data.description,

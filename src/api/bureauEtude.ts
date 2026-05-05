@@ -10,3 +10,8 @@ export const getBureauEtudeById = async (id: number): Promise<BureauEtudesDTO> =
   const { data } = await api.get(`/bureauEtude/${id}`);
   return data;
 };
+
+export const getAllBureauEtude = async (): Promise<BureauEtudesDTO[]> => {
+  const { data } = await api.get('/bureauEtude');
+  return data;
+};

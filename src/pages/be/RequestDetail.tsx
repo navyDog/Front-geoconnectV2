@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
 import { getPropositionDevisByDemandeId, createPropositionDevis } from '../../api/propositionDevis';
-import { DemandeDevisDTO, PropositionDevisDTO } from '../../types';
+import { getAllBureauEtude } from '../../api/bureauEtude';
+import { DemandeDevisDTO, PropositionDevisDTO, BureauEtudesDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -17,6 +18,7 @@ export default function BERequestDetail() {
   const { user } = useAuth();
   const [demande, setDemande] = useState<DemandeDevisDTO | null>(null);
   const [myProposition, setMyProposition] = useState<PropositionDevisDTO | null>(null);
+  const [myBureau, setMyBureau] = useState<BureauEtudesDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -25,6 +27,10 @@ export default function BERequestDetail() {
     async function fetchData() {
       if (!id || !user) return;
       try {
+        const bureaux = await getAllBureauEtude();
+        const bureau = bureaux.find(b => b.utilisateurId === user.userId);
+        if (bureau) setMyBureau(bureau);
+
         const [demandeData, propsData] = await Promise.all([
           getDemandeDevisById(Number(id)),
           getPropositionDevisByDemandeId(Number(id)).catch(() => [])
@@ -32,9 +38,10 @@ export default function BERequestDetail() {
         setDemande(demandeData);
         
         // Find if this BE has already submitted
-        // Assuming userId matches bureauEtudeId for MVP mapping
-        const mine = (propsData || []).find((p: PropositionDevisDTO) => p.bureauEtudeId === user.userId);
-        if (mine) setMyProposition(mine);
+        if (bureau?.id) {
+          const mine = (propsData || []).find((p: PropositionDevisDTO) => p.bureauEtudeId === bureau.id);
+          if (mine) setMyProposition(mine);
+        }
 
       } catch (err) {
         console.error("Failed to fetch detail", err);
@@ -46,12 +53,12 @@ export default function BERequestDetail() {
   }, [id, user]);
 
   const onSubmit = async (data: any) => {
-    if (!demande || !user) return;
+    if (!demande || !user || !myBureau?.id) return;
     setIsSubmitting(true);
     try {
       const newProp = await createPropositionDevis({
         demandeDevisId: demande.id,
-        bureauEtudeId: user.userId, // Fake mapping to user ID
+        bureauEtudeId: myBureau.id,
         prix: parseFloat(data.prix),
         dateRendu: data.dateRendu,
         dateIntervention: data.dateIntervention,

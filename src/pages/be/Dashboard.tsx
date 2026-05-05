@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getAllDemandeDevis } from '../../api/demandeDevis';
 import { getPropositionDevisByBureauId } from '../../api/propositionDevis';
+import { getAllBureauEtude } from '../../api/bureauEtude';
 import { DemandeDevisDTO, PropositionDevisDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -23,10 +24,14 @@ export default function BEDashboard() {
     async function fetchData() {
       if (!user) return;
       try {
+        const bureaux = await getAllBureauEtude();
+        const myBureau = bureaux.find(b => b.utilisateurId === user.userId);
+        
         const [allDemandes, myProps] = await Promise.all([
           getAllDemandeDevis(),
-          // Assuming user.userId maps to bureauId for MVP
-          getPropositionDevisByBureauId(user.userId).catch(() => [])
+          myBureau && myBureau.id
+            ? getPropositionDevisByBureauId(myBureau.id).catch(() => [])
+            : Promise.resolve([])
         ]);
         
         setDemandes(allDemandes || []);

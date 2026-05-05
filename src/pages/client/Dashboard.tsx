@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getDemandeDevisByClientId } from '../../api/demandeDevis';
 import { getPropositionDevisByDemandeId } from '../../api/propositionDevis';
+import { getAllClients } from '../../api/client';
 import { DemandeDevisDTO, PropositionDevisDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -19,10 +20,16 @@ export default function ClientDashboard() {
     async function fetchData() {
       if (!user) return;
       try {
-        // Here we ideally fetch client by UserID, but for MVP let's assume clientId = user.userId
-        // or we need to GET /client matching this user.
-        // Assuming user.userId maps to Client.id for MVP if there isn't a dedicated endpoint to get current client.
-        const demandesData = await getDemandeDevisByClientId(user.userId);
+        const clients = await getAllClients();
+        const myClient = clients.find(c => c.utilisateurId === user.userId);
+        
+        if (!myClient || myClient.id === undefined) {
+             setDemandes([]);
+             setIsLoading(false);
+             return;
+        }
+
+        const demandesData = await getDemandeDevisByClientId(myClient.id);
         
         // Fetch propositions for each demande
         const enrichedDemandes = await Promise.all(
@@ -67,7 +74,12 @@ export default function ClientDashboard() {
           <h1 className="text-lg font-bold text-slate-800">Mes Demandes en Cours</h1>
           <p className="text-[11px] text-slate-500 uppercase tracking-wider font-bold">Aperçu et suivi des devis</p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex space-x-3 items-center">
+          <Link to="/client/demande/new">
+            <Button size="sm" className="hidden sm:inline-flex bg-blue-600 hover:bg-blue-700 text-white shadow-sm h-8 rounded px-3 text-[11px] uppercase tracking-wider font-bold">
+              Nouvelle demande
+            </Button>
+          </Link>
           <div className="bg-slate-50 border border-slate-100 rounded px-3 py-1.5 flex items-center gap-3">
             <div>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Demandes</p>

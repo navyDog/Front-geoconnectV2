@@ -14,9 +14,11 @@ import Success from './pages/Success';
 
 import ClientDashboard from './pages/client/Dashboard';
 import ClientRequestDetail from './pages/client/RequestDetail';
+import NewRequest from './pages/client/NewRequest';
 
 import BEDashboard from './pages/be/Dashboard';
 import BERequestDetail from './pages/be/RequestDetail';
+import BERegister from './pages/be/BERegister';
 
 export default function App() {
   return (
@@ -27,10 +29,12 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/success" element={<Success />} />
+            <Route path="/bureau-etudes/inscription" element={<BERegister />} />
 
             {/* Client Routes */}
             <Route element={<ProtectedRoute allowedRoles={['CLIENT']} />}>
               <Route path="/client/dashboard" element={<ClientDashboard />} />
+              <Route path="/client/demande/new" element={<NewRequest />} />
               <Route path="/client/demande/:id" element={<ClientRequestDetail />} />
             </Route>
 

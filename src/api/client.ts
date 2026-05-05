@@ -10,3 +10,9 @@ export const getClientById = async (id: number): Promise<ClientDTO> => {
   const { data } = await api.get(`/client/${id}`);
   return data;
 };
+
+export const getAllClients = async (): Promise<ClientDTO[]> => {
+  const { data } = await api.get('/client');
+  return data;
+};
+
