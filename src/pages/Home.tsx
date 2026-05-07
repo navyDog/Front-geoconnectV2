@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { registerCall } from '../api/auth';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/Card';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '../contexts/AuthContext';
-import { registerCall } from '../api/auth';
 import { createClient, getAllClients } from '../api/client';
 import { createDemandeDevis } from '../api/demandeDevis';
 import { MapPin, Briefcase, Mail } from 'lucide-react';
 
 export default function Home() {
   const [step, setStep] = useState(0);
-  
+  const { user, isAuthenticated } = useAuth();
+
+  if (isAuthenticated) {
+    if (user?.role === 'CLIENT') return <Navigate to="/client/dashboard" replace />;
+    if (user?.role === 'BUREAU_ETUDE') return <Navigate to="/be/dashboard" replace />;
+  }
+
   if (step === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center mt-12 max-w-2xl mx-auto space-y-6">
