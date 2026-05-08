@@ -20,3 +20,9 @@ export const updatePropositionDevis = async (proposition: PropositionDevisDTO) =
   const { data } = await api.put('/propositionDevis', proposition);
   return data;
 };
+
+export const accepterPropositionDevis = async (id: number) => {
+  const { data } = await api.patch(`/propositionDevis/${id}/accepter`);
+  return data;
+};
+

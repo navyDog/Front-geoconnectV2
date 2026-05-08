@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
-import { getPropositionDevisByDemandeId } from '../../api/propositionDevis';
-import { createEtude } from '../../api/etude';
+import { getPropositionDevisByDemandeId, accepterPropositionDevis } from '../../api/propositionDevis';
 import { DemandeDevisDTO, PropositionDevisDTO } from '../../types';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '../../components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { MapPin, Calendar, Clock, ChevronLeft, Building2, CheckCircle2, FileText, Download } from 'lucide-react';
+import { MapPin, Clock, ChevronLeft, Building2, CheckCircle2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
@@ -39,15 +38,11 @@ export default function ClientRequestDetail() {
   const handleAccept = async (propId: number) => {
     setIsAccepting(propId);
     try {
-      // 1. Create Etude
-      await createEtude({
-        propositionDevisId: propId,
-        etat: 'DEVIS_VALIDE'
-      });
-      // Updating UI ideally, maybe re-fetch or optimistically update.
-      // Since it's MVP, we just update the local state to show it's accepted.
-      setPropositions(props => props.map(p => 
-        p.id === propId ? { ...p, refusee: false, accepted: true } : { ...p, refusee: true }
+      await accepterPropositionDevis(propId);
+      // Le backend refuse automatiquement les autres propositions,
+      // on met à jour l'UI en conséquence.
+      setPropositions(props => props.map(p =>
+        p.id === propId ? { ...p, statut: 'ACCEPTEE' as const } : { ...p, statut: 'REFUSEE' as const }
       ));
     } catch (err) {
       console.error(err);
@@ -69,7 +64,7 @@ export default function ClientRequestDetail() {
     return <div>Demande introuvable.</div>;
   }
 
-  const acceptedProp = propositions.find((p: any) => p.accepted);
+  const acceptedProp = propositions.find(p => p.statut === 'ACCEPTEE');
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
@@ -147,9 +142,10 @@ export default function ClientRequestDetail() {
                   </thead>
                   <tbody className="text-xs">
                     {propositions.map(prop => {
-                      const isAccepted = (prop as any).accepted;
+                      const isAccepted = prop.statut === 'ACCEPTEE';
+                      const isRefused  = prop.statut === 'REFUSEE';
                       return (
-                        <tr key={prop.id} className={`border-b border-slate-50 ${isAccepted ? 'bg-green-50/50' : prop.refusee ? 'opacity-50' : 'hover:bg-slate-50'}`}>
+                        <tr key={prop.id} className={`border-b border-slate-50 ${isAccepted ? 'bg-green-50/50' : isRefused ? 'opacity-50' : 'hover:bg-slate-50'}`}>
                           <td className="px-4 py-3">
                             <div className="font-semibold text-slate-800 flex items-center">
                               <Building2 className="w-3 h-3 mr-1.5 text-slate-400"/>
@@ -168,17 +164,17 @@ export default function ClientRequestDetail() {
                               <span className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded font-bold text-[10px] uppercase tracking-wider">
                                 <CheckCircle2 className="w-3 h-3 mr-1" /> Validée
                               </span>
-                            ) : prop.refusee ? (
+                            ) : isRefused ? (
                               <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Refusée</span>
-                            ) : !acceptedProp ? (
-                              <Button 
-                                size="sm"
-                                onClick={() => handleAccept(prop.id!)}
-                                isLoading={isAccepting === prop.id}
-                              >
-                                Accepter
-                              </Button>
-                            ) : null}
+                            ) : acceptedProp ? null : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleAccept(prop.id!)}
+                                    isLoading={isAccepting === prop.id}
+                                >
+                                  Accepter
+                                </Button>
+                            )}
                           </td>
                         </tr>
                       );
