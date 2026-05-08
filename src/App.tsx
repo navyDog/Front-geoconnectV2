@@ -4,7 +4,7 @@
  */
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
@@ -20,13 +20,23 @@ import BEDashboard from './pages/be/Dashboard';
 import BERequestDetail from './pages/be/RequestDetail';
 import BERegister from './pages/be/BERegister';
 
+// Redirige automatiquement selon le rôle si connecté, sinon affiche Home
+function RootRedirect() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Home />;
+  if (user?.role === 'CLIENT') return <Navigate to="/client/dashboard" replace />;
+  if (user?.role === 'BUREAU_ETUDE') return <Navigate to="/be/dashboard" replace />;
+  return <Home />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<Login />} />
             <Route path="/success" element={<Success />} />
             <Route path="/bureau-etudes/inscription" element={<BERegister />} />

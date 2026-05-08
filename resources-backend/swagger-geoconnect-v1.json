@@ -1,0 +1,2289 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "GeoConnect API",
+    "description": "Documentation technique de l'API GeoConnect",
+    "contact": {
+      "name": "GeoConnect Team",
+      "email": "contact@geoconnect.fr"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/propositionDevis": {
+      "get": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Get all propositionDevis",
+        "operationId": "getAllPropositionDevis",
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des propositions de devis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune proposition de devis trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Update an existing propositionDevis",
+        "operationId": "updatePropositionDevis",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropositionDevisDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "200": {
+            "description": "Proposition de devis mise à jour avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Create a new propositionDevis",
+        "operationId": "createPropositionDevis",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropositionDevisDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "201": {
+            "description": "Proposition de devis créée avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude": {
+      "get": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Get all etudes",
+        "operationId": "getAllEtudes",
+        "responses": {
+          "200": {
+            "description": "Liste des etudes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune etude trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Update an existing Etude",
+        "operationId": "updateEtude",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EtudeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "200": {
+            "description": "Etude mise à jour avec succès"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Create a new Etude",
+        "operationId": "createEtude",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EtudeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "201": {
+            "description": "Etude créée avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/demandeDevis": {
+      "get": {
+        "tags": [
+          "demande-devis-controller"
+        ],
+        "summary": "Get all demandeDevis",
+        "operationId": "getAllDemandeDevis",
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des demandeDevis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucun demandeDevis trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "demande-devis-controller"
+        ],
+        "summary": "Update an existing DemandeDevis",
+        "operationId": "updateDemandeDevis",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemandeDevisDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "DemandeDevis mise à jour avec succès"
+          },
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "demande-devis-controller"
+        ],
+        "summary": "Create a new DemandeDevis",
+        "operationId": "createDemandeDevis",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemandeDevisDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "201": {
+            "description": "DemandeDevis créée avec succès"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/client": {
+      "get": {
+        "tags": [
+          "client-controller"
+        ],
+        "summary": "Get all clients",
+        "operationId": "getAllClients",
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des clients",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucun client trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "client-controller"
+        ],
+        "summary": "Update an existing Client",
+        "operationId": "updateClient",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "200": {
+            "description": "Client mis à jour avec succès"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "client-controller"
+        ],
+        "summary": "Create a new Client",
+        "operationId": "createClient",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "201": {
+            "description": "Client créé avec succès"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/bureauEtude": {
+      "get": {
+        "tags": [
+          "bureau-etudes-controller"
+        ],
+        "summary": "Get all bureau d'étude",
+        "operationId": "getAllBureauEtude",
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BureauEtudesDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucun bureau d'étude trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BureauEtudesDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des bureaux d'étude",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BureauEtudesDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BureauEtudesDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BureauEtudesDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "bureau-etudes-controller"
+        ],
+        "summary": "Update an existing Bureau d'Etude",
+        "operationId": "updateBureauEtude",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BureauEtudesDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "200": {
+            "description": "Bureau d'étude mis à jour avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "bureau-etudes-controller"
+        ],
+        "summary": "Create a new Bureau d'Etude",
+        "operationId": "createBureauEtude",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BureauEtudesDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "201": {
+            "description": "Bureau d'étude créé avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "summary": "Inscription d'un nouvel utilisateur",
+        "operationId": "register",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Corps de la requête invalide (email, mot de passe ou rôle manquant/invalide)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Inscription réussie, token JWT retourné",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "summary": "Authentification d'un utilisateur existant",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "401": {
+            "description": "Email ou mot de passe incorrect",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Authentification réussie, token JWT retourné",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corps de la requête invalide (email ou mot de passe manquant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/propositionDevis/{id}/accepter": {
+      "patch": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Accepter une proposition de devis",
+        "operationId": "accepterPropositionDevis",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "200": {
+            "description": "Proposition acceptée, étude créée et autres propositions refusées"
+          },
+          "404": {
+            "description": "Proposition de devis introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/propositionDevis/{id}": {
+      "get": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Get one propositionDevis by ID",
+        "operationId": "getPropositionDevisById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropositionDevisDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve une proposition de devis à partir de son ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropositionDevisDTO"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune proposition de devis trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropositionDevisDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropositionDevisDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropositionDevisDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Proposition de devis introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropositionDevisDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Delete a propositionDevis",
+        "operationId": "deletePropositionDevis",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Réservé au rôle ADMIN"
+          },
+          "200": {
+            "description": "Proposition de devis supprimée avec succès"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Proposition de devis introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/propositionDevis/devis/{id}": {
+      "get": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Get all propositionDevis by DemandeDevis ID",
+        "operationId": "getAllPropositionDevisByDemandeDevisId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Demande de devis introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune proposition de devis trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve toutes les propositions de devis à partir de l'ID de la demande de devis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/propositionDevis/bureauEtude/{id}": {
+      "get": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Get all propositionDevis by BureauEtude ID",
+        "operationId": "getAllPropositionDevisByBureauEtudeId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune proposition de devis trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve toutes les propositions de devis à partir de l'ID du bureau d'étude",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bureau d'étude introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}": {
+      "get": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Get one etude by ID",
+        "operationId": "getEtudeById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve une etude à partir de son ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDTO"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune etude trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Etude introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Delete a Etude",
+        "operationId": "deleteEtude",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Etude supprimée avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Réservé au rôle ADMIN"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/client/{id}": {
+      "get": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Get all etudes by client ID",
+        "operationId": "getAllEtudesByClientId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve toutes les etudes à partir de l'ID du client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune etude trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/bureauEtude/{id}": {
+      "get": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Get all etudes by Bureau d'Étude ID",
+        "operationId": "getAllEtudesByBureauEtudeId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trouve toutes les etudes à partir de l'ID du bureau d'étude",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucune etude trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bureau d'étude introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/demandeDevis/{id}": {
+      "get": {
+        "tags": [
+          "demande-devis-controller"
+        ],
+        "summary": "Get one demandeDevis by ID",
+        "operationId": "getDemandeDevisById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trouve un demandeDevis à partir de son ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeDevisDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "DemandeDevis introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeDevisDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeDevisDTO"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucun demandeDevis trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeDevisDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeDevisDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeDevisDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "demande-devis-controller"
+        ],
+        "summary": "Delete a DemandeDevis",
+        "operationId": "deleteDemandeDevis",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "DemandeDevis introuvable"
+          },
+          "200": {
+            "description": "DemandeDevis supprimée avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Réservé au rôle ADMIN"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/demandeDevis/client/{id}": {
+      "get": {
+        "tags": [
+          "demande-devis-controller"
+        ],
+        "summary": "Get all DemandeDevis by Client ID",
+        "operationId": "getAllDemandeDevisByClientId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucun demandeDevis trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve tous les demandeDevis à partir de l'ID du client",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/client/{id}": {
+      "get": {
+        "tags": [
+          "client-controller"
+        ],
+        "summary": "Get one  client by ID",
+        "operationId": "getClientById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Client introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve un client à partir de son ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucun client trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "client-controller"
+        ],
+        "summary": "Delete a Client",
+        "operationId": "deleteClient",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Client introuvable"
+          },
+          "200": {
+            "description": "Client supprimé avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Réservé au rôle ADMIN"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/bureauEtude/{id}": {
+      "get": {
+        "tags": [
+          "bureau-etudes-controller"
+        ],
+        "summary": "Get one  bureau d'étude by ID",
+        "operationId": "getBureauEtudeByID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Aucun bureau d'étude trouvé",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Bureau d'étude introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve un bureau d'étude à partir de son ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "bureau-etudes-controller"
+        ],
+        "summary": "Delete a Bureau d'Etude",
+        "operationId": "deleteBureauEtude",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bureau d'étude supprimé avec succès"
+          },
+          "404": {
+            "description": "Bureau d'étude introuvable"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Réservé au rôle ADMIN"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PropositionDevisDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bureauEtudeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "demandeDevisId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dateRendu": {
+            "type": "string",
+            "format": "date"
+          },
+          "prix": {
+            "type": "number"
+          },
+          "cheminDevisPdf": {
+            "type": "string"
+          },
+          "refusee": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EtudeDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "propositionDevisId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "etat": {
+            "type": "string",
+            "enum": [
+              "DEVIS_VALIDE",
+              "DATE_INTERVENTION_PROPOSEE",
+              "DATE_INTERVENTION_FIXEE",
+              "INTERVENTION_EFFECTUEE",
+              "RAPPORT_TERMINE",
+              "PAIEMENT_EFFECTUE"
+            ]
+          }
+        }
+      },
+      "AdresseDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rue": {
+            "type": "string"
+          },
+          "codePostal": {
+            "type": "string"
+          },
+          "ville": {
+            "type": "string"
+          }
+        }
+      },
+      "DemandeDevisDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "delaiMax": {
+            "type": "string",
+            "format": "date"
+          },
+          "adresseProjet": {
+            "$ref": "#/components/schemas/AdresseDTO"
+          },
+          "clientId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ClientDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nom": {
+            "type": "string"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "adresseFacturation": {
+            "$ref": "#/components/schemas/AdresseDTO"
+          },
+          "utilisateurId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "BureauEtudesDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "raisonSociale": {
+            "type": "string"
+          },
+          "emailContact": {
+            "type": "string"
+          },
+          "telContact": {
+            "type": "string"
+          },
+          "adresse": {
+            "$ref": "#/components/schemas/AdresseDTO"
+          },
+          "utilisateurId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AuthRequestDTO": {
+        "required": [
+          "email",
+          "password",
+          "role"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "role": {
+            "pattern": "CLIENT|BUREAU_ETUDE",
+            "type": "string"
+          }
+        }
+      },
+      "AuthResponseDTO": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequestDTO": {
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "Entrez votre token JWT ici. Exemple : eyJhbGci...",
+        "name": "bearerAuth",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

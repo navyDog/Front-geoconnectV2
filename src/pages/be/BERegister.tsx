@@ -3,13 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { registerCall } from '../../api/auth';
 import { createBureauEtude } from '../../api/bureauEtude';
-import { Building2, Mail, Lock, FileText, Upload } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
+import { useAuth } from '../../contexts/AuthContext';
+import { Building2, FileText, Upload } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 
 export default function BERegister() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorDetails, setErrorDetails] = useState('');
@@ -22,9 +24,14 @@ export default function BERegister() {
       // 1. Register User (Role: BUREAU_ETUDE)
       const authRes = await registerCall({
         email: data.email,
-        motDePasse: data.password,
+        password: data.password,
         role: 'BUREAU_ETUDE'
       });
+
+      // Persist the token via AuthContext (gère localStorage + état global)
+      if (authRes.token) {
+        login(authRes);
+      }
 
       // 2. Create Bureau d'Etude Profile
       await createBureauEtude({

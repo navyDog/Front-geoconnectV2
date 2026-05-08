@@ -33,6 +33,8 @@ export interface DemandeDevisDTO {
   dateCreation?: string;
 }
 
+export type StatutProposition = 'EN_ATTENTE' | 'ACCEPTEE' | 'REFUSEE';
+
 export interface PropositionDevisDTO {
   id?: number;
   bureauEtudeId?: number;
@@ -40,10 +42,10 @@ export interface PropositionDevisDTO {
   dateRendu?: string;
   prix?: number;
   cheminDevisPdf?: string;
-  refusee?: boolean;
-  dateIntervention?: string; // Added from spec
-  dateCreation?: string; // Added from spec
-  
+  statut?: StatutProposition;
+  dateIntervention?: string;
+  dateCreation?: string;
+
   // Custom frontend properties to embed relations temporarily
   bureauEtude?: BureauEtudesDTO;
   demandeDevis?: DemandeDevisDTO;

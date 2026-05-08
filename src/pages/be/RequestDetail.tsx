@@ -7,7 +7,7 @@ import { DemandeDevisDTO, PropositionDevisDTO, BureauEtudesDTO } from '../../typ
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { MapPin, Calendar, Clock, ChevronLeft, FileText, FileCheck, Send } from 'lucide-react';
+import { MapPin, Clock, ChevronLeft, FileCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
@@ -59,10 +59,9 @@ export default function BERequestDetail() {
       const newProp = await createPropositionDevis({
         demandeDevisId: demande.id,
         bureauEtudeId: myBureau.id,
-        prix: parseFloat(data.prix),
+        prix: Number.parseFloat(data.prix),
         dateRendu: data.dateRendu,
         dateIntervention: data.dateIntervention,
-        refusee: null as unknown as boolean, // Not set until client rejects
       });
       setMyProposition(newProp);
     } catch (err) {
@@ -157,7 +156,9 @@ export default function BERequestDetail() {
                   </div>
                   <div className="bg-green-100/50 p-2 rounded">
                     <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Statut</span>
-                    <span className="font-semibold text-xs">{myProposition.refusee ? "Refusé" : (myProposition as any).accepted ? "Accepté" : "En attente"}</span>
+                    <span className="font-semibold text-xs">
+                      {myProposition.statut === 'REFUSEE' ? 'Refusée' : myProposition.statut === 'ACCEPTEE' ? 'Acceptée' : 'En attente'}
+                    </span>
                   </div>
                 </div>
               </CardContent>
