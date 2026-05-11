@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
 import { getPropositionDevisByDemandeId, createPropositionDevis } from '../../api/propositionDevis';
 import { getAllBureauEtude } from '../../api/bureauEtude';
+import { uploadDocument } from '../../api/document';
 import { DemandeDevisDTO, PropositionDevisDTO, BureauEtudesDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { MapPin, Clock, ChevronLeft, FileCheck } from 'lucide-react';
+import { MapPin, Clock, ChevronLeft, FileCheck, Paperclip } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+
+const TYPE_LABELS: Record<string, string> = {
+  G1: 'G1 — Étude de site',
+  G2_AVP: 'G2 AVP — Avant-projet',
+  G2_PRO: 'G2 PRO — Projet',
+};
 
 export default function BERequestDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +28,8 @@ export default function BERequestDetail() {
   const [myBureau, setMyBureau] = useState<BureauEtudesDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   useEffect(() => {
@@ -33,18 +42,16 @@ export default function BERequestDetail() {
 
         const [demandeData, propsData] = await Promise.all([
           getDemandeDevisById(Number(id)),
-          getPropositionDevisByDemandeId(Number(id)).catch(() => [])
+          getPropositionDevisByDemandeId(Number(id)).catch(() => []),
         ]);
         setDemande(demandeData);
-        
-        // Find if this BE has already submitted
+
         if (bureau?.id) {
           const mine = (propsData || []).find((p: PropositionDevisDTO) => p.bureauEtudeId === bureau.id);
           if (mine) setMyProposition(mine);
         }
-
       } catch (err) {
-        console.error("Failed to fetch detail", err);
+        console.error('Failed to fetch detail', err);
       } finally {
         setIsLoading(false);
       }
@@ -56,17 +63,25 @@ export default function BERequestDetail() {
     if (!demande || !user || !myBureau?.id) return;
     setIsSubmitting(true);
     try {
+      // Upload PDF optionnel → récupère documentId
+      let documentId: number | undefined;
+      if (pdfFile) {
+        const doc = await uploadDocument(pdfFile);
+        documentId = doc.id;
+      }
+
       const newProp = await createPropositionDevis({
         demandeDevisId: demande.id,
         bureauEtudeId: myBureau.id,
         prix: Number.parseFloat(data.prix),
-        dateRendu: data.dateRendu,
-        dateIntervention: data.dateIntervention,
+        delaiMaxRendu: data.delaiMaxRendu ? Number(data.delaiMaxRendu) : undefined,
+        delaiMaxIntervention: data.delaiMaxIntervention ? Number(data.delaiMaxIntervention) : undefined,
+        documentId,
       });
       setMyProposition(newProp);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de la soumission");
+      alert('Erreur lors de la soumission');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +99,10 @@ export default function BERequestDetail() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <Link to="/be/dashboard" className="inline-flex items-center text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider">
+      <Link
+        to="/be/dashboard"
+        className="inline-flex items-center text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider"
+      >
         <ChevronLeft className="w-3 h-3 mr-1" />
         Retour aux missions
       </Link>
@@ -99,7 +117,7 @@ export default function BERequestDetail() {
                   RÉF: #GC-{demande.id}
                 </CardTitle>
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase border border-slate-200">
-                  {demande.typeProjet || 'Projet Standard'}
+                  {demande.type ? TYPE_LABELS[demande.type] ?? demande.type : 'Projet Standard'}
                 </span>
               </div>
             </CardHeader>
@@ -110,20 +128,47 @@ export default function BERequestDetail() {
                     <MapPin className="w-3 h-3 mr-1" /> Localisation
                   </h4>
                   <p className="text-xs font-semibold text-slate-700">
-                    {demande.adresseProjet?.ville || 'Non renseigné'} 
+                    {demande.adresseProjet?.ville || 'Non renseigné'}
                     <span className="text-slate-500 ml-1">({demande.adresseProjet?.codePostal})</span>
                   </p>
+                  {demande.adresseProjet?.rue && (
+                    <p className="text-xs text-slate-500 mt-0.5">{demande.adresseProjet.rue}</p>
+                  )}
                 </div>
                 <div className="p-3 bg-slate-50 rounded border border-slate-100">
                   <h4 className="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider flex items-center">
                     <Clock className="w-3 h-3 mr-1" /> Échéance
                   </h4>
                   <p className="text-xs font-semibold text-slate-700">
-                    {demande.delaiMax ? format(new Date(demande.delaiMax), 'dd MMM yyyy', {locale:fr}) : 'Flexible'}
+                    {demande.delaiMax
+                      ? format(new Date(demande.delaiMax), 'dd MMM yyyy', { locale: fr })
+                      : 'Flexible'}
                   </p>
                 </div>
               </div>
-              
+
+              {/* Infos complémentaires */}
+              <div className="grid grid-cols-3 gap-2">
+                {demande.superficie && (
+                  <div className="p-2 bg-slate-50 rounded border border-slate-100 text-center">
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Superficie</span>
+                    <span className="text-xs font-semibold text-slate-700">{demande.superficie} m²</span>
+                  </div>
+                )}
+                {demande.nombreLot && (
+                  <div className="p-2 bg-slate-50 rounded border border-slate-100 text-center">
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Lots</span>
+                    <span className="text-xs font-semibold text-slate-700">{demande.nombreLot}</span>
+                  </div>
+                )}
+                {demande.referenceCadastrale && (
+                  <div className="p-2 bg-slate-50 rounded border border-slate-100 text-center">
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Cadastre</span>
+                    <span className="text-xs font-semibold text-slate-700">{demande.referenceCadastrale}</span>
+                  </div>
+                )}
+              </div>
+
               <div>
                 <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Description du besoin</h4>
                 <p className="text-xs text-slate-600 leading-relaxed bg-white p-3 rounded border border-slate-200 shadow-sm whitespace-pre-wrap">
@@ -147,26 +192,42 @@ export default function BERequestDetail() {
               <CardContent className="pt-4 text-green-900 space-y-4">
                 <div>
                   <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Montant Estimé</span>
-                  <span className="font-bold text-2xl font-mono">{myProposition.prix} € <span className="text-xs">HT</span></span>
+                  <span className="font-bold text-2xl font-mono">
+                    {myProposition.prix} € <span className="text-xs">HT</span>
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="bg-green-100/50 p-2 rounded">
-                    <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Délai Rendu</span>
-                    <span className="font-semibold text-xs">{myProposition.dateRendu ? format(new Date(myProposition.dateRendu), 'dd/MM/yyyy') : '-'}</span>
+                    <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Délai rendu</span>
+                    <span className="font-semibold text-xs">
+                      {myProposition.delaiMaxRendu == null ? '—' : `${myProposition.delaiMaxRendu} j`}
+                    </span>
                   </div>
                   <div className="bg-green-100/50 p-2 rounded">
                     <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Statut</span>
                     <span className="font-semibold text-xs">
-                      {myProposition.statut === 'REFUSEE' ? 'Refusée' : myProposition.statut === 'ACCEPTEE' ? 'Acceptée' : 'En attente'}
+                      {myProposition.statut === 'REFUSEE'
+                        ? 'Refusée'
+                        : myProposition.statut === 'ACCEPTEE'
+                        ? 'Acceptée'
+                        : 'En attente'}
                     </span>
                   </div>
                 </div>
+                {myProposition.delaiMaxIntervention != null && (
+                  <div className="bg-green-100/50 p-2 rounded">
+                    <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Délai intervention</span>
+                    <span className="font-semibold text-xs">{myProposition.delaiMaxIntervention} j</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
             <Card className="border-slate-200 h-full flex flex-col">
               <CardHeader className="bg-slate-50/50 pb-3 border-b border-slate-100">
-                <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Formuler une offre</CardTitle>
+                <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                  Formuler une offre
+                </CardTitle>
                 <CardDescription className="text-[10px]">Déposez votre estimation pour ce projet</CardDescription>
               </CardHeader>
               <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
@@ -177,19 +238,44 @@ export default function BERequestDetail() {
                     step="0.01"
                     placeholder="Ex: 4200"
                     {...register('prix', { required: true })}
-                    error={errors.prix ? "Requis" : undefined}
+                    error={errors.prix ? 'Requis' : undefined}
                   />
                   <Input
-                    label="ÉCHÉANCE DE RENDU *"
-                    type="date"
-                    {...register('dateRendu', { required: true })}
-                    error={errors.dateRendu ? "Requis" : undefined}
+                    label="DÉLAI RENDU (jours) *"
+                    type="number"
+                    placeholder="Ex: 30"
+                    {...register('delaiMaxRendu', { required: true })}
+                    error={errors.delaiMaxRendu ? 'Requis' : undefined}
                   />
                   <Input
-                    label="DATE INTERVENTION (OPTIONNEL)"
-                    type="date"
-                    {...register('dateIntervention')}
+                    label="DÉLAI INTERVENTION (jours, optionnel)"
+                    type="number"
+                    placeholder="Ex: 14"
+                    {...register('delaiMaxIntervention')}
                   />
+
+                  {/* Upload PDF optionnel */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+                      DEVIS PDF (optionnel)
+                    </label>
+                    <div
+                      className="flex items-center gap-2 border border-dashed border-slate-300 rounded-md px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Paperclip className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                      <span className="text-xs text-slate-500 truncate">
+                        {pdfFile ? pdfFile.name : 'Joindre un fichier PDF…'}
+                      </span>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)}
+                    />
+                  </div>
                 </CardContent>
                 <CardFooter className="bg-slate-50 border-t border-slate-100 py-3">
                   <Button type="submit" isLoading={isSubmitting} className="w-full text-[10px]">

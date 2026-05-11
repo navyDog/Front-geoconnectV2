@@ -1,19 +1,61 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LogOut, LayoutDashboard, FileText, User } from 'lucide-react';
+import { LogOut } from 'lucide-react';
+import { getAllClients } from '../../api/client';
+import { getAllBureauEtude } from '../../api/bureauEtude';
 
 export default function MainLayout() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [identityLabel, setIdentityLabel] = useState<string>('');
+
+  useEffect(() => {
+    async function loadIdentityLabel() {
+      if (!isAuthenticated || !user?.userId) {
+        setIdentityLabel('');
+        return;
+      }
+
+      try {
+        if (user.role === 'CLIENT') {
+          const clients = await getAllClients();
+          const myClient = clients.find((c) => c.utilisateurId === user.userId);
+          const fullName = [myClient?.prenom, myClient?.nom].filter(Boolean).join(' ').trim();
+          setIdentityLabel(fullName || 'Client');
+          return;
+        }
+
+        if (user.role === 'BUREAU_ETUDE') {
+          const bureaux = await getAllBureauEtude();
+          const myBureau = bureaux.find((b) => b.utilisateurId === user.userId);
+          setIdentityLabel(myBureau?.raisonSociale || 'Bureau d\'Études');
+          return;
+        }
+
+        setIdentityLabel(user.login || 'Utilisateur');
+      } catch (error) {
+        console.error('Failed to load identity label', error);
+        setIdentityLabel(user.role === 'BUREAU_ETUDE' ? 'Bureau d\'Études' : 'Client');
+      }
+    }
+
+    loadIdentityLabel();
+  }, [isAuthenticated, user]);
+
+  const roleLabel = useMemo(() => {
+    if (user?.role === 'BUREAU_ETUDE') return 'Bureau d\'Études';
+    if (user?.role === 'CLIENT') return 'Client';
+    return 'Utilisateur';
+  }, [user?.role]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const navItems = user?.role === 'CLIENT' 
+  const navItems = user?.role === 'CLIENT'
     ? [{ label: 'Mes demandes', path: '/client/dashboard' }]
     : user?.role === 'BUREAU_ETUDE'
     ? [{ label: 'Marketplace', path: '/be/dashboard' }]
@@ -27,7 +69,7 @@ export default function MainLayout() {
             <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center font-bold text-xl italic">G</div>
             <span className="font-bold tracking-tight text-lg">GEOCONNECT</span>
           </Link>
-          
+
           {isAuthenticated && (
             <div className="hidden md:flex gap-6 text-sm font-medium text-slate-300">
               {navItems.map((item) => {
@@ -49,13 +91,13 @@ export default function MainLayout() {
             </div>
           )}
         </div>
-        
+
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <>
               <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold leading-none">{user?.email}</p>
-                <p className="text-[10px] text-slate-400">ID: {user?.userId} • {user?.role === 'BUREAU_ETUDE' ? 'Bureau d\'Études' : 'Client'}</p>
+                <p className="text-xs font-bold leading-none">{identityLabel || roleLabel}</p>
+                <p className="text-[10px] text-slate-400">{user?.login} • {roleLabel}</p>
               </div>
               <button
                 onClick={handleLogout}
@@ -75,7 +117,7 @@ export default function MainLayout() {
           )}
         </div>
       </nav>
-      
+
       <main className="flex-1 w-full max-w-[1200px] mx-auto px-4 sm:px-6 py-6 pb-20 md:pb-6 overflow-auto">
         <Outlet />
       </main>
@@ -89,4 +131,3 @@ export default function MainLayout() {
     </div>
   );
 }
-

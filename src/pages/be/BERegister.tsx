@@ -23,7 +23,7 @@ export default function BERegister() {
     try {
       // 1. Register User (Role: BUREAU_ETUDE)
       const authRes = await registerCall({
-        email: data.email,
+        login: data.email,
         password: data.password,
         role: 'BUREAU_ETUDE'
       });

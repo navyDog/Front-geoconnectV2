@@ -6,6 +6,21 @@ export const createPropositionDevis = async (proposition: PropositionDevisDTO) =
   return data;
 };
 
+export const updatePropositionDevis = async (proposition: PropositionDevisDTO) => {
+  const { data } = await api.put('/propositionDevis', proposition);
+  return data;
+};
+
+export const getAllPropositionDevis = async (): Promise<PropositionDevisDTO[]> => {
+  const { data } = await api.get('/propositionDevis');
+  return data;
+};
+
+export const getPropositionDevisById = async (id: number): Promise<PropositionDevisDTO> => {
+  const { data } = await api.get(`/propositionDevis/${id}`);
+  return data;
+};
+
 export const getPropositionDevisByDemandeId = async (demandeId: number): Promise<PropositionDevisDTO[]> => {
   const { data } = await api.get(`/propositionDevis/devis/${demandeId}`);
   return data;
@@ -16,13 +31,11 @@ export const getPropositionDevisByBureauId = async (bureauId: number): Promise<P
   return data;
 };
 
-export const updatePropositionDevis = async (proposition: PropositionDevisDTO) => {
-  const { data } = await api.put('/propositionDevis', proposition);
-  return data;
-};
-
 export const accepterPropositionDevis = async (id: number) => {
   const { data } = await api.patch(`/propositionDevis/${id}/accepter`);
   return data;
 };
 
+export const deletePropositionDevis = async (id: number): Promise<void> => {
+  await api.delete(`/propositionDevis/${id}`);
+};

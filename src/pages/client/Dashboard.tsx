@@ -10,7 +10,6 @@ import { Button } from '../../components/ui/Button';
 import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 type TabType = 'DEMANDES' | 'ETUDES';
 
@@ -179,11 +178,11 @@ export default function ClientDashboard() {
                         </CardTitle>
                         <CardDescription className="flex items-center">
                           <Calendar className="w-3 h-3 mr-1"/>
-                          Publiée le {demande.dateCreation ? format(new Date(demande.dateCreation), 'dd MMM yyyy', { locale: fr }) : 'N/A'}
+                          Réf. #GC-{demande.id}
                         </CardDescription>
                       </div>
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase">
-                        {demande.typeProjet || 'Projet'}
+                        {demande.type || 'Projet'}
                       </span>
                     </div>
                   </CardHeader>
@@ -251,7 +250,7 @@ export default function ClientDashboard() {
                           )}
                         </CardTitle>
                         <CardDescription>
-                          {demande?.typeProjet || 'Étude géotechnique'}
+                          {demande?.type || 'Étude géotechnique'}
                         </CardDescription>
                       </div>
                       {etatInfo && (

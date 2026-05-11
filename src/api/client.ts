@@ -6,6 +6,11 @@ export const createClient = async (client: ClientDTO) => {
   return data;
 };
 
+export const updateClient = async (client: ClientDTO) => {
+  const { data } = await api.put('/client', client);
+  return data;
+};
+
 export const getClientById = async (id: number): Promise<ClientDTO> => {
   const { data } = await api.get(`/client/${id}`);
   return data;
@@ -16,3 +21,6 @@ export const getAllClients = async (): Promise<ClientDTO[]> => {
   return data;
 };
 
+export const deleteClient = async (id: number): Promise<void> => {
+  await api.delete(`/client/${id}`);
+};
