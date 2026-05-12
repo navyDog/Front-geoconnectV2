@@ -1,6 +1,52 @@
 import api from './index';
 import { EtudeDTO, EtudeDetailDTO } from '../types';
 
+// ─── Transitions d'état ───────────────────────────────────────────────────────
+
+/** BE → propose une date d'intervention */
+export const proposerDateIntervention = async (id: number, dateIntervention: string): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/proposer-date`, { dateIntervention });
+  return data;
+};
+
+/** CLIENT → valide la date proposée */
+export const validerDateIntervention = async (id: number): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/valider-date`);
+  return data;
+};
+
+/** CLIENT → refuse la date proposée */
+export const refuserDateIntervention = async (id: number): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/refuser-date`);
+  return data;
+};
+
+/** BE → marque l'intervention comme effectuée */
+export const marquerInterventionEffectuee = async (id: number): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/intervention-effectuee`);
+  return data;
+};
+
+/** BE → clôture le rapport (nécessite un document déjà uploadé) */
+export const terminerRapport = async (id: number, rapportId: number, dateRendu: string): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/rapport-termine`, { rapportId, dateRendu });
+  return data;
+};
+
+/** CLIENT → confirme le paiement */
+export const confirmerPaiement = async (id: number): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/paiement-effectue`);
+  return data;
+};
+
+/** BE → attache le devis signé (pas de transition d'état) */
+export const attacherDevisSigne = async (id: number, documentId: number): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/devis-signe`, { documentId });
+  return data;
+};
+
+// ─── CRUD de base ─────────────────────────────────────────────────────────────
+
 export const createEtude = async (etude: EtudeDTO) => {
   const { data } = await api.post('/etude', etude);
   return data;

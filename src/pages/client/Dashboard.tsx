@@ -7,7 +7,8 @@ import { getEtudesByClientId, getEtudeDetailById } from '../../api/etude';
 import { DemandeDevisDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical, Building2 } from 'lucide-react';
+import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical, Building2, AlertCircle } from 'lucide-react';
+import { clientMustAct } from '../../components/etude/EtudeStatusBadge';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
@@ -314,11 +315,16 @@ export default function ClientDashboard() {
                       </div>
                     </div>
                   </CardContent>
-                  {demande?.id && (
+                  {etude.id && (
                     <CardFooter>
-                      <Link to={`/client/demande/${demande.id}`} className="w-full">
-                        <Button variant="outline" size="sm" className="w-full group">
-                          Voir le dossier <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+                      <Link to={`/client/etude/${etude.id}`} className="w-full">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`w-full group ${clientMustAct(etude.etat) ? 'border-orange-400 text-orange-700 hover:bg-orange-50' : ''}`}
+                        >
+                          {clientMustAct(etude.etat) && <AlertCircle className="w-3 h-3 mr-1.5 text-orange-500" />}
+                          Suivre l'étude <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
                     </CardFooter>

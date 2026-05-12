@@ -161,146 +161,6 @@
         ]
       }
     },
-    "/etude": {
-      "get": {
-        "tags": [
-          "etude-controller"
-        ],
-        "summary": "Get all etudes",
-        "operationId": "getAllEtudes",
-        "responses": {
-          "403": {
-            "description": "Droits insuffisants",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtudeDTO"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtudeDTO"
-                  }
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Liste des etudes (vide si aucune)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtudeDTO"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Token JWT absent, expiré ou invalide",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtudeDTO"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "etude-controller"
-        ],
-        "summary": "Update an existing Etude",
-        "operationId": "updateEtude",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EtudeDTO"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "403": {
-            "description": "Réservé aux rôles ADMIN et CLIENT"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Token JWT absent, expiré ou invalide"
-          },
-          "200": {
-            "description": "Etude mise à jour avec succès"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "etude-controller"
-        ],
-        "summary": "Create a new Etude",
-        "operationId": "createEtude",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EtudeDTO"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Etude créée avec succès"
-          },
-          "403": {
-            "description": "Réservé aux rôles ADMIN et CLIENT"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Token JWT absent, expiré ou invalide"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
     "/demandeDevis": {
       "get": {
         "tags": [
@@ -721,6 +581,110 @@
         ]
       }
     },
+    "/etude": {
+      "get": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Get all etudes",
+        "operationId": "getAllEtudes",
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des etudes (vide si aucune)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EtudeDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Create a new Etude",
+        "operationId": "createEtude",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EtudeDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "200": {
+            "description": "Etude créée avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/documents/upload": {
       "post": {
         "tags": [
@@ -910,6 +874,330 @@
           },
           "404": {
             "description": "Proposition de devis introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/valider-date": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[CLIENT] Valide la date proposée → DATE_INTERVENTION_FIXEE",
+        "operationId": "validerDateIntervention",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Date validée avec succès"
+          },
+          "400": {
+            "description": "Transition invalide"
+          },
+          "403": {
+            "description": "Réservé au rôle CLIENT"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/refuser-date": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[CLIENT] Refuse la date proposée → DATE_INTERVENTION_PROPOSEE (reset)",
+        "operationId": "refuserDateIntervention",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Date refusée, nouvelle proposition attendue"
+          },
+          "400": {
+            "description": "Transition invalide"
+          },
+          "403": {
+            "description": "Réservé au rôle CLIENT"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/rapport-termine": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[BE] Marque le rapport terminé et l'attache → RAPPORT_TERMINE",
+        "operationId": "marquerRapportTermine",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RapportTermineRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Etude ou document introuvable"
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE"
+          },
+          "400": {
+            "description": "Transition invalide ou données manquantes"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "200": {
+            "description": "Rapport terminé et attaché"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/proposer-date": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[BE] Propose une date d'intervention → DATE_INTERVENTION_PROPOSEE",
+        "operationId": "proposerDateIntervention",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DateInterventionRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          },
+          "200": {
+            "description": "Date proposée avec succès"
+          },
+          "400": {
+            "description": "Transition invalide ou date manquante"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/paiement-effectue": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[CLIENT] Confirme le paiement → PAIEMENT_EFFECTUE",
+        "operationId": "marquerPaiementEffectue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Transition invalide"
+          },
+          "403": {
+            "description": "Réservé au rôle CLIENT"
+          },
+          "200": {
+            "description": "Paiement confirmé"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/intervention-effectuee": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[BE] Marque l'intervention comme effectuée → INTERVENTION_EFFECTUEE",
+        "operationId": "marquerInterventionEffectuee",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Intervention marquée effectuée"
+          },
+          "400": {
+            "description": "Transition invalide"
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/devis-signe": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[BE] Attache le devis signé (document déjà uploadé) à l'étude",
+        "operationId": "attacherDevisSigne",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentIdRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "404": {
+            "description": "Etude ou document introuvable"
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE"
+          },
+          "400": {
+            "description": "Document manquant"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "200": {
+            "description": "Devis signé attaché avec succès"
           }
         },
         "security": [
@@ -2275,49 +2563,6 @@
           }
         }
       },
-      "EtudeDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "propositionDevisId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "etat": {
-            "type": "string",
-            "enum": [
-              "DEVIS_VALIDE",
-              "DATE_INTERVENTION_PROPOSEE",
-              "DATE_INTERVENTION_FIXEE",
-              "INTERVENTION_EFFECTUEE",
-              "RAPPORT_TERMINE",
-              "PAIEMENT_EFFECTUE"
-            ]
-          },
-          "devisSigneId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "rapportId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "chargeAffaire": {
-            "type": "string"
-          },
-          "dateIntervention": {
-            "type": "string",
-            "format": "date"
-          },
-          "dateRendu": {
-            "type": "string",
-            "format": "date"
-          }
-        }
-      },
       "AdresseDTO": {
         "type": "object",
         "properties": {
@@ -2443,6 +2688,49 @@
           }
         }
       },
+      "EtudeDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "propositionDevisId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "etat": {
+            "type": "string",
+            "enum": [
+              "DEVIS_VALIDE",
+              "DATE_INTERVENTION_PROPOSEE",
+              "DATE_INTERVENTION_FIXEE",
+              "INTERVENTION_EFFECTUEE",
+              "RAPPORT_TERMINE",
+              "PAIEMENT_EFFECTUE"
+            ]
+          },
+          "devisSigneId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rapportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chargeAffaire": {
+            "type": "string"
+          },
+          "dateIntervention": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateRendu": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
       "DocumentDTO": {
         "type": "object",
         "properties": {
@@ -2526,6 +2814,47 @@
           },
           "password": {
             "type": "string"
+          }
+        }
+      },
+      "RapportTermineRequestDTO": {
+        "required": [
+          "dateRendu",
+          "rapportId"
+        ],
+        "type": "object",
+        "properties": {
+          "rapportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "dateRendu": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "DateInterventionRequestDTO": {
+        "required": [
+          "dateIntervention"
+        ],
+        "type": "object",
+        "properties": {
+          "dateIntervention": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "DocumentIdRequestDTO": {
+        "required": [
+          "documentId"
+        ],
+        "type": "object",
+        "properties": {
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
