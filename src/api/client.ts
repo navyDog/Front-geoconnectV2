@@ -21,6 +21,16 @@ export const getAllClients = async (): Promise<ClientDTO[]> => {
   return data;
 };
 
+/**
+ * Retourne le profil client de l'utilisateur connecté via GET /client/me.
+ * Le paramètre userId est conservé pour compatibilité de signature mais n'est plus utilisé :
+ * l'identité est lue depuis le JWT côté backend.
+ */
+export const getClientByUserId = async (_userId: number): Promise<ClientDTO | null> => {
+  const { data } = await api.get('/client/me');
+  return data ?? null;
+};
+
 export const deleteClient = async (id: number): Promise<void> => {
   await api.delete(`/client/${id}`);
 };

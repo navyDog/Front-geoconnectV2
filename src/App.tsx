@@ -5,6 +5,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
@@ -34,8 +35,9 @@ function RootRedirect() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <ToastProvider>
+      <AuthProvider>
+        <Router>
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<RootRedirect />} />
@@ -64,5 +66,6 @@ export default function App() {
         </Routes>
       </Router>
     </AuthProvider>
+    </ToastProvider>
   );
 }

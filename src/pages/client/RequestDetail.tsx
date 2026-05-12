@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
-import { getPropositionDevisByDemandeId, accepterPropositionDevis } from '../../api/propositionDevis';
+import { getPropositionDevisByDemandeId, accepterPropositionDevis, refuserPropositionDevis } from '../../api/propositionDevis';
 import { DemandeDevisDTO, PropositionDevisDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { MapPin, Clock, ChevronLeft, Building2, CheckCircle2, FileText } from 'lucide-react';
+import { useToast } from '../../contexts/ToastContext';
 import { format } from 'date-fns';
 
 export default function ClientRequestDetail() {
   const { id } = useParams<{ id: string }>();
+  const { toastError, toastSuccess } = useToast();
   const [demande, setDemande] = useState<DemandeDevisDTO | null>(null);
   const [propositions, setPropositions] = useState<PropositionDevisDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAccepting, setIsAccepting] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState<number | null>(null);
+  const [confirmAcceptId, setConfirmAcceptId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -21,12 +25,12 @@ export default function ClientRequestDetail() {
       try {
         const [demandeData, propsData] = await Promise.all([
           getDemandeDevisById(Number(id)),
-          getPropositionDevisByDemandeId(Number(id)).catch(() => []) // Catch if 404 or 204
+          getPropositionDevisByDemandeId(Number(id)).catch((): PropositionDevisDTO[] => []),
         ]);
         setDemande(demandeData);
         setPropositions(propsData || []);
-      } catch (err) {
-        console.error("Failed to fetch detail", err);
+      } catch (err: any) {
+        toastError(err?.response?.data?.message ?? err?.message ?? 'Impossible de charger la demande.');
       } finally {
         setIsLoading(false);
       }
@@ -35,19 +39,32 @@ export default function ClientRequestDetail() {
   }, [id]);
 
   const handleAccept = async (propId: number) => {
-    setIsAccepting(propId);
+    setIsProcessing(propId);
     try {
       await accepterPropositionDevis(propId);
-      // Le backend refuse automatiquement les autres propositions,
-      // on met à jour l'UI en conséquence.
       setPropositions(props => props.map(p =>
         p.id === propId ? { ...p, statut: 'ACCEPTEE' as const } : { ...p, statut: 'REFUSEE' as const }
       ));
-    } catch (err) {
-      console.error(err);
-      alert("Erreur lors de l'acceptation.");
+      toastSuccess('Proposition acceptée. L\'étude va démarrer.');
+    } catch (err: any) {
+      toastError(err?.response?.data?.message ?? err?.message ?? "Erreur lors de l'acceptation.");
     } finally {
-      setIsAccepting(null);
+      setIsProcessing(null);
+    }
+  };
+
+  const handleRefuse = async (propId: number) => {
+    setIsProcessing(propId);
+    try {
+      await refuserPropositionDevis(propId);
+      setPropositions(props => props.map(p =>
+        p.id === propId ? { ...p, statut: 'REFUSEE' as const } : p
+      ));
+      toastSuccess('Proposition refusée.');
+    } catch (err: any) {
+      toastError(err?.response?.data?.message ?? err?.message ?? 'Erreur lors du refus.');
+    } finally {
+      setIsProcessing(null);
     }
   };
 
@@ -166,13 +183,23 @@ export default function ClientRequestDetail() {
                             ) : isRefused ? (
                               <span className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Refusée</span>
                             ) : acceptedProp ? null : (
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleAccept(prop.id!)}
-                                    isLoading={isAccepting === prop.id}
-                                >
-                                  Accepter
-                                </Button>
+                                <div className="flex justify-center gap-2">
+                                  <Button
+                                      size="sm"
+                                      onClick={() => setConfirmAcceptId(prop.id!)}
+                                      isLoading={isProcessing === prop.id}
+                                  >
+                                    Accepter
+                                  </Button>
+                                  <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleRefuse(prop.id!)}
+                                      isLoading={isProcessing === prop.id}
+                                  >
+                                    Refuser
+                                  </Button>
+                                </div>
                             )}
                           </td>
                         </tr>
@@ -185,6 +212,21 @@ export default function ClientRequestDetail() {
           </div>
         </div>
       </div>
+
+      {confirmAcceptId !== null && (
+        <ConfirmModal
+          title="Accepter cette proposition ?"
+          message="En confirmant, vous acceptez cette offre et les autres propositions seront automatiquement refusées. Cette action est irréversible."
+          confirmLabel="Accepter l'offre"
+          isLoading={isProcessing === confirmAcceptId}
+          onConfirm={async () => {
+            const id = confirmAcceptId;
+            setConfirmAcceptId(null);
+            await handleAccept(id);
+          }}
+          onCancel={() => setConfirmAcceptId(null)}
+        />
+      )}
     </div>
   );
 }

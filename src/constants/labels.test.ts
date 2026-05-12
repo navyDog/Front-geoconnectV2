@@ -1,0 +1,74 @@
+import { describe, it, expect } from 'vitest';
+import { ETAT_LABELS, STATUT_LABELS, TYPE_LABELS } from './labels';
+import { EtatEtude, StatutProposition, TypeDemandeDevis } from '../types';
+
+const ALL_ETATS: EtatEtude[] = [
+  'DEVIS_VALIDE',
+  'DATE_INTERVENTION_PROPOSEE',
+  'DATE_INTERVENTION_FIXEE',
+  'INTERVENTION_EFFECTUEE',
+  'RAPPORT_TERMINE',
+  'PAIEMENT_EFFECTUE',
+];
+
+const ALL_STATUTS: StatutProposition[] = ['EN_ATTENTE', 'ACCEPTEE', 'REFUSEE'];
+
+const ALL_TYPES: TypeDemandeDevis[] = ['G1', 'G2_AVP', 'G2_PRO'];
+
+describe('ETAT_LABELS', () => {
+  it('couvre tous les EtatEtude sans entrée manquante', () => {
+    ALL_ETATS.forEach(etat => {
+      expect(ETAT_LABELS[etat]).toBeDefined();
+    });
+  });
+
+  it('chaque entrée possède un label non vide', () => {
+    ALL_ETATS.forEach(etat => {
+      expect(ETAT_LABELS[etat].label.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('chaque entrée possède une couleur non vide', () => {
+    ALL_ETATS.forEach(etat => {
+      expect(ETAT_LABELS[etat].color.length).toBeGreaterThan(0);
+    });
+  });
+
+  it('ne contient pas de clés inconnues', () => {
+    const keys = Object.keys(ETAT_LABELS) as EtatEtude[];
+    keys.forEach(key => {
+      expect(ALL_ETATS).toContain(key);
+    });
+  });
+});
+
+describe('STATUT_LABELS', () => {
+  it('couvre tous les StatutProposition', () => {
+    ALL_STATUTS.forEach(statut => {
+      expect(STATUT_LABELS[statut]).toBeDefined();
+      expect(STATUT_LABELS[statut].length).toBeGreaterThan(0);
+    });
+  });
+
+  it('les libellés sont corrects', () => {
+    expect(STATUT_LABELS['EN_ATTENTE']).toBe('En attente');
+    expect(STATUT_LABELS['ACCEPTEE']).toBe('Acceptée');
+    expect(STATUT_LABELS['REFUSEE']).toBe('Refusée');
+  });
+});
+
+describe('TYPE_LABELS', () => {
+  it('couvre tous les TypeDemandeDevis', () => {
+    ALL_TYPES.forEach(type => {
+      expect(TYPE_LABELS[type]).toBeDefined();
+      expect(TYPE_LABELS[type].length).toBeGreaterThan(0);
+    });
+  });
+
+  it('les libellés contiennent le code de type', () => {
+    expect(TYPE_LABELS['G1']).toContain('G1');
+    expect(TYPE_LABELS['G2_AVP']).toContain('G2 AVP');
+    expect(TYPE_LABELS['G2_PRO']).toContain('G2 PRO');
+  });
+});
+
