@@ -79,13 +79,19 @@ export default function ClientDashboard() {
     );
   }
 
-  const totalDemandes = demandes.length;
-  const totalPropositions = demandes.reduce((acc, d) => acc + (d.propositions?.length || 0), 0);
 
   // Demandes dont une proposition a été acceptée → masquées de "Mes Demandes"
   const demandesEnCours = demandes.filter(d =>
     !d.propositions?.some(p => p.statut === 'ACCEPTEE')
   );
+
+  // Statistiques sur les études
+  const etudesTotales = etudes.length;
+  const etudesTerminees = etudes.filter(e => e.etat === 'RAPPORT_TERMINE').length;
+  const etudesEnCours = etudes.filter(e =>
+    e.etat && e.etat !== 'RAPPORT_TERMINE' && e.etat !== 'PAIEMENT_EFFECTUE'
+  ).length;
+
 
   return (
     <div className="space-y-6">
@@ -93,7 +99,7 @@ export default function ClientDashboard() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-lg font-bold text-slate-800">Mon Espace</h1>
-          <p className="text-[11px] text-slate-500 uppercase tracking-wider font-bold">Demandes de devis & Études en cours</p>
+            <p className="text-[11px] text-slate-500 uppercase tracking-wider font-bold">Géotechnique - Suivi des études</p>
         </div>
         <div className="flex space-x-3 items-center">
           <Link to="/client/demande/new">
@@ -103,18 +109,20 @@ export default function ClientDashboard() {
           </Link>
           <div className="bg-slate-50 border border-slate-100 rounded px-3 py-1.5 flex items-center gap-3">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Demandes</p>
-              <p className="text-sm font-bold text-slate-900">{totalDemandes}</p>
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Études Totales</p>
+             <p className="text-sm font-bold text-teal-600">{etudesTotales}</p>
+
             </div>
             <div className="w-px h-6 bg-slate-200"></div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Propositions</p>
-              <p className="text-sm font-bold text-blue-600">{totalPropositions}</p>
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">En Cours</p>
+             <p className="text-sm font-bold text-orange-600">{etudesEnCours}</p>
             </div>
             <div className="w-px h-6 bg-slate-200"></div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Études</p>
-              <p className="text-sm font-bold text-teal-600">{etudes.length}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Terminées</p>
+              <p className="text-sm font-bold text-green-600">{etudesTerminees}</p>
+
             </div>
           </div>
         </div>
