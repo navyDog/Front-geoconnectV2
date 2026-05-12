@@ -44,7 +44,7 @@ export default function Login() {
               G
             </div>
           </div>
-          <CardTitle className="text-xl">GEO_CONNECT</CardTitle>
+          <CardTitle className="text-xl">MON ÉTUDE DE SOL</CardTitle>
           <CardDescription>Portail Professionnel & Particulier</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>

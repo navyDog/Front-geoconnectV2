@@ -1357,6 +1357,83 @@
         ]
       }
     },
+    "/etude/{id}/detail": {
+      "get": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "Get full etude detail (etude + propositionDevis + demandeDevis)",
+        "operationId": "getEtudeDetailById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Aucune étude trouvée",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDetailDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDetailDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDetailDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDetailDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Détail complet de l'étude avec propositionDevis et demandeDevis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtudeDetailDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/etude/client/{id}": {
       "get": {
         "tags": [
@@ -2449,6 +2526,181 @@
           },
           "password": {
             "type": "string"
+          }
+        }
+      },
+      "BureauEtudesDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "raisonSociale": {
+            "type": "string"
+          },
+          "emailContact": {
+            "type": "string"
+          },
+          "telContact": {
+            "type": "string"
+          },
+          "adresse": {
+            "$ref": "#/components/schemas/AdresseDTO"
+          }
+        }
+      },
+      "ClientDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "civilite": {
+            "type": "string",
+            "enum": [
+              "MR",
+              "MME",
+              "AUTRE"
+            ]
+          },
+          "nom": {
+            "type": "string"
+          },
+          "prenom": {
+            "type": "string"
+          },
+          "tel": {
+            "type": "string"
+          },
+          "adresseFacturation": {
+            "$ref": "#/components/schemas/AdresseDTO"
+          }
+        }
+      },
+      "DemandeDevisDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "delaiMax": {
+            "type": "string",
+            "format": "date"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "G1",
+              "G2_AVP",
+              "G2_PRO"
+            ]
+          },
+          "nombreLot": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "referenceCadastrale": {
+            "type": "string"
+          },
+          "superficie": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "docsDevisId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "adresseProjet": {
+            "$ref": "#/components/schemas/AdresseDTO"
+          },
+          "client": {
+            "$ref": "#/components/schemas/ClientDetail"
+          }
+        }
+      },
+      "EtudeDetailDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "etat": {
+            "type": "string",
+            "enum": [
+              "DEVIS_VALIDE",
+              "DATE_INTERVENTION_PROPOSEE",
+              "DATE_INTERVENTION_FIXEE",
+              "INTERVENTION_EFFECTUEE",
+              "RAPPORT_TERMINE",
+              "PAIEMENT_EFFECTUE"
+            ]
+          },
+          "chargeAffaire": {
+            "type": "string"
+          },
+          "dateIntervention": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateRendu": {
+            "type": "string",
+            "format": "date"
+          },
+          "devisSigneId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rapportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "propositionDevis": {
+            "$ref": "#/components/schemas/PropositionDevisDetail"
+          }
+        }
+      },
+      "PropositionDevisDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "statut": {
+            "type": "string",
+            "enum": [
+              "EN_ATTENTE",
+              "ACCEPTEE",
+              "REFUSEE"
+            ]
+          },
+          "prix": {
+            "type": "number"
+          },
+          "delaiMaxIntervention": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "delaiMaxRendu": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "devisPdfId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bureauEtude": {
+            "$ref": "#/components/schemas/BureauEtudesDetail"
+          },
+          "demandeDevis": {
+            "$ref": "#/components/schemas/DemandeDevisDetail"
           }
         }
       }

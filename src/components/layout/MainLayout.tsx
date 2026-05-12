@@ -67,7 +67,7 @@ export default function MainLayout() {
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center font-bold text-xl italic">G</div>
-            <span className="font-bold tracking-tight text-lg">GEOCONNECT</span>
+            <span className="font-bold tracking-tight text-lg">MON ÉTUDE DE SOL</span>
           </Link>
 
           {isAuthenticated && (
@@ -126,7 +126,7 @@ export default function MainLayout() {
         <div className="flex gap-4">
           <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Serveur Opérationnel</span>
         </div>
-        <div className="font-medium">v1.0.0 • © 2026 GeoConnect SAS</div>
+        <div className="font-medium">v1.0.0 • © 2026 Mon Étude de Sol SAS</div>
       </footer>
     </div>
   );

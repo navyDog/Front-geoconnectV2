@@ -98,3 +98,57 @@ export interface AuthResponseDTO {
 }
 
 export type Role = AuthResponseDTO['role'];
+
+// ─── Types enrichis (endpoint /etude/{id}/detail) ────────────────────────────
+
+export interface ClientDetail {
+  id?: number;
+  civilite?: Civilite;
+  nom?: string;
+  prenom?: string;
+  tel?: string;
+  adresseFacturation?: AdresseDTO;
+}
+
+export interface BureauEtudesDetail {
+  id?: number;
+  raisonSociale?: string;
+  emailContact?: string;
+  telContact?: string;
+  adresse?: AdresseDTO;
+}
+
+export interface DemandeDevisDetail {
+  id?: number;
+  delaiMax?: string;
+  type?: TypeDemandeDevis;
+  nombreLot?: number;
+  referenceCadastrale?: string;
+  superficie?: number;
+  description?: string;
+  docsDevisId?: number;
+  adresseProjet?: AdresseDTO;
+  client?: ClientDetail;
+}
+
+export interface PropositionDevisDetail {
+  id?: number;
+  statut?: StatutProposition;
+  prix?: number;
+  delaiMaxIntervention?: number;
+  delaiMaxRendu?: number;
+  devisPdfId?: number;
+  bureauEtude?: BureauEtudesDetail;
+  demandeDevis?: DemandeDevisDetail;
+}
+
+export interface EtudeDetailDTO {
+  id?: number;
+  etat?: EtatEtude;
+  chargeAffaire?: string;
+  dateIntervention?: string;
+  dateRendu?: string;
+  devisSigneId?: number;
+  rapportId?: number;
+  propositionDevis?: PropositionDevisDetail;
+}
