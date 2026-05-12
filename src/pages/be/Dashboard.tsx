@@ -3,16 +3,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getAllDemandeDevis } from '../../api/demandeDevis';
 import { getPropositionDevisByBureauId } from '../../api/propositionDevis';
 import { getAllBureauEtude } from '../../api/bureauEtude';
-import { getEtudesByBureauId } from '../../api/etude';
-import { DemandeDevisDTO, PropositionDevisDTO, EtudeDTO } from '../../types';
+import { getEtudesByBureauId, getEtudeDetailById } from '../../api/etude';
+import { DemandeDevisDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Calendar, ChevronRight, FlaskConical } from 'lucide-react';
+import { Calendar, ChevronRight, FlaskConical, MapPin, User, Building2, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 type TabType = 'OUVERT' | 'EN_ATTENTE' | 'ETUDE_EN_COURS';
 
-// Mapping des états pour affichage
 const ETAT_LABELS: Record<string, { label: string; color: string }> = {
   DEVIS_VALIDE:                 { label: 'Devis validé',               color: 'bg-blue-100 text-blue-700' },
   DATE_INTERVENTION_PROPOSEE:   { label: 'Date proposée',              color: 'bg-yellow-100 text-yellow-700' },
@@ -22,11 +21,23 @@ const ETAT_LABELS: Record<string, { label: string; color: string }> = {
   PAIEMENT_EFFECTUE:            { label: 'Paiement effectué',          color: 'bg-green-100 text-green-700' },
 };
 
+const STATUT_LABELS: Record<string, string> = {
+  EN_ATTENTE: 'En attente',
+  ACCEPTEE:   'Acceptée',
+  REFUSEE:    'Refusée',
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  G1:      'G1 — Étude de site',
+  G2_AVP:  'G2 AVP — Avant-projet',
+  G2_PRO:  'G2 PRO — Projet',
+};
+
 export default function BEDashboard() {
   const { user } = useAuth();
   const [demandes, setDemandes] = useState<DemandeDevisDTO[]>([]);
   const [propositions, setPropositions] = useState<PropositionDevisDTO[]>([]);
-  const [etudes, setEtudes] = useState<EtudeDTO[]>([]);
+  const [etudes, setEtudes] = useState<EtudeDetailDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('OUVERT');
 
@@ -37,15 +48,22 @@ export default function BEDashboard() {
         const bureaux = await getAllBureauEtude();
         const myBureau = bureaux.find(b => b.utilisateurId === user.userId);
 
-        const [allDemandes, myProps, myEtudes] = await Promise.all([
+        const [allDemandes, myProps, rawEtudes] = await Promise.all([
           getAllDemandeDevis(),
           myBureau?.id ? getPropositionDevisByBureauId(myBureau.id).catch(() => []) : Promise.resolve([]),
-          myBureau?.id ? getEtudesByBureauId(myBureau.id).catch(() => [])           : Promise.resolve([]),
+          myBureau?.id ? getEtudesByBureauId(myBureau.id).catch(() => []) : Promise.resolve([]),
         ]);
 
         setDemandes(allDemandes || []);
         setPropositions(myProps || []);
-        setEtudes(myEtudes || []);
+
+        // Charger le détail complet de chaque étude via le nouvel endpoint
+        const details = await Promise.all(
+          (rawEtudes || []).map((e: EtudeDTO) =>
+            e.id ? getEtudeDetailById(e.id).catch(() => ({ ...e } as EtudeDetailDTO)) : Promise.resolve({ ...e } as EtudeDetailDTO)
+          )
+        );
+        setEtudes(details);
       } catch (err) {
         console.error("Failed to fetch dashboard data", err);
       } finally {
@@ -63,10 +81,15 @@ export default function BEDashboard() {
     );
   }
 
-  // Derive lists
   const myPropDemandeIds = new Set(propositions.map(p => p.demandeDevisId));
   const openDemandes = demandes.filter(d => !myPropDemandeIds.has(d.id));
   const pendingProps = propositions.filter(p => p.statut === 'EN_ATTENTE');
+
+  const formatDate = (value?: string) => {
+    if (!value) return '—';
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('fr-FR');
+  };
 
   const renderDemandeCard = (demande: DemandeDevisDTO, prop?: PropositionDevisDTO) => (
     <Card key={demande.id} className={prop ? "border-slate-200" : "border-blue-200"}>
@@ -78,7 +101,7 @@ export default function BEDashboard() {
             </CardTitle>
             <CardDescription className="flex items-center">
               <Calendar className="w-3 h-3 mr-1"/>
-              Réf. #GC-{demande.id}
+              Réf. #MES-{demande.id}
             </CardDescription>
           </div>
           <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase">
@@ -87,7 +110,7 @@ export default function BEDashboard() {
         </div>
       </CardHeader>
       <CardContent className="pt-3">
-        {prop ? (
+        {prop && (
           <div className="bg-blue-50/50 p-2 rounded border border-blue-100 mb-3 text-[11px]">
             <div className="flex justify-between items-center mb-1">
               <span className="text-blue-700 font-bold uppercase tracking-wider">Votre proposition</span>
@@ -97,7 +120,7 @@ export default function BEDashboard() {
               Rendu: {prop.delaiMaxRendu == null ? 'N/A' : `${prop.delaiMaxRendu} j`}
             </div>
           </div>
-        ) : null}
+        )}
         <p className="text-xs text-slate-600 line-clamp-2 mb-2">
           {demande.description || 'Aucune description fournie.'}
         </p>
@@ -112,22 +135,26 @@ export default function BEDashboard() {
     </Card>
   );
 
-  const renderEtudeCard = (etude: EtudeDTO) => {
-    const prop = propositions.find(p => p.id === etude.propositionDevisId);
-    const demande = prop ? demandes.find(d => d.id === prop.demandeDevisId) : undefined;
+  const renderEtudeCard = (etude: EtudeDetailDTO) => {
+    const prop = etude.propositionDevis;
+    const demande = prop?.demandeDevis;
+    const client = demande?.client;
     const etatInfo = etude.etat ? ETAT_LABELS[etude.etat] : null;
 
     return (
-      <Card key={etude.id} className="border-slate-200">
+      <Card key={etude.id} className="border-slate-200 flex flex-col">
         <CardHeader>
           <div className="flex justify-between items-start">
             <div className="space-y-0.5">
               <CardTitle className="flex items-center text-slate-800">
                 <FlaskConical className="w-4 h-4 mr-1.5 text-slate-400" />
-                {demande?.adresseProjet?.ville || 'Projet'}
+                {demande?.adresseProjet?.ville || 'Projet géotechnique'}
+                {demande?.adresseProjet?.codePostal && (
+                  <span className="text-slate-400 font-normal ml-2 text-xs">({demande.adresseProjet.codePostal})</span>
+                )}
               </CardTitle>
               <CardDescription>
-                {demande?.type || 'Étude géotechnique'}
+                {demande?.type ? TYPE_LABELS[demande.type] ?? demande.type : 'Étude géotechnique'}
               </CardDescription>
             </div>
             {etatInfo && (
@@ -137,16 +164,69 @@ export default function BEDashboard() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="pt-2 text-xs text-slate-600">
+        <CardContent className="pt-2 text-xs text-slate-600 space-y-3 flex-1">
+          {/* Description */}
           <p className="line-clamp-2">{demande?.description || 'Aucune description.'}</p>
-          {prop && (
-            <div className="mt-3 flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100 text-[11px]">
-              <span className="text-slate-500 font-bold uppercase tracking-wider">Montant devis</span>
-              <span className="font-bold text-slate-900">{prop.prix} €</span>
+
+          {/* Client commanditaire */}
+          {client && (
+            <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded border border-slate-100 text-[11px]">
+              <User className="w-3 h-3 text-slate-400 shrink-0" />
+              <span className="text-slate-500 font-bold uppercase tracking-wider mr-1">Client :</span>
+              <span className="font-semibold text-slate-700">
+                {[client.prenom, client.nom].filter(Boolean).join(' ') || '—'}
+              </span>
             </div>
           )}
+
+          {/* Infos demande */}
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="p-2 bg-slate-50 rounded border border-slate-100">
+              <p className="text-slate-400 font-bold uppercase tracking-wider">Réf. projet</p>
+              <p className="font-semibold text-slate-700">{demande?.id ? `#MES-${demande.id}` : '—'}</p>
+            </div>
+            <div className="p-2 bg-slate-50 rounded border border-slate-100">
+              <p className="text-slate-400 font-bold uppercase tracking-wider">Délai client</p>
+              <p className="font-semibold text-slate-700">{formatDate(demande?.delaiMax)}</p>
+            </div>
+            {demande?.superficie && (
+              <div className="p-2 bg-slate-50 rounded border border-slate-100">
+                <p className="text-slate-400 font-bold uppercase tracking-wider">Superficie</p>
+                <p className="font-semibold text-slate-700">{demande.superficie} m²</p>
+              </div>
+            )}
+            {demande?.nombreLot && (
+              <div className="p-2 bg-slate-50 rounded border border-slate-100">
+                <p className="text-slate-400 font-bold uppercase tracking-wider">Lots</p>
+                <p className="font-semibold text-slate-700">{demande.nombreLot}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Proposition */}
+          <div className="p-2 bg-blue-50/50 rounded border border-blue-100 text-[11px]">
+            <p className="text-blue-700 font-bold uppercase tracking-wider mb-1">Votre proposition</p>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-700">
+              <p>Montant : <span className="font-semibold">{prop?.prix != null ? `${prop.prix} €` : '—'}</span></p>
+              <p>Statut : <span className="font-semibold">{prop?.statut ? (STATUT_LABELS[prop.statut] ?? prop.statut) : '—'}</span></p>
+              <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu != null ? `${prop.delaiMaxRendu} j` : '—'}</span></p>
+              <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention != null ? `${prop.delaiMaxIntervention} j` : '—'}</span></p>
+            </div>
+          </div>
+
+          {/* Dates étude */}
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="p-2 bg-slate-50 rounded border border-slate-100">
+              <p className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><Clock className="w-3 h-3"/>Intervention</p>
+              <p className="font-semibold text-slate-700">{formatDate(etude.dateIntervention)}</p>
+            </div>
+            <div className="p-2 bg-slate-50 rounded border border-slate-100">
+              <p className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><Clock className="w-3 h-3"/>Rendu</p>
+              <p className="font-semibold text-slate-700">{formatDate(etude.dateRendu)}</p>
+            </div>
+          </div>
         </CardContent>
-        {demande && (
+        {demande?.id && (
           <CardFooter>
             <Link to={`/be/demande/${demande.id}`} className="w-full">
               <Button variant="outline" size="sm" className="w-full group">
@@ -180,13 +260,8 @@ export default function BEDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as TabType)}
-                className={`
-                  whitespace-nowrap py-3 px-1 border-b-2 text-xs font-bold uppercase tracking-wider flex items-center
-                  ${isActive
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'
-                  }
-                `}
+                className={`whitespace-nowrap py-3 px-1 border-b-2 text-xs font-bold uppercase tracking-wider flex items-center
+                  ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'}`}
               >
                 {tab.label}
                 <span className={`ml-2 py-0.5 px-2 rounded-full text-[10px] ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>

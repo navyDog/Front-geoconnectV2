@@ -114,7 +114,7 @@ export default function BERequestDetail() {
             <CardHeader className="border-b border-slate-100 pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm flex items-center bg-blue-100 text-blue-800 px-2 py-0.5 rounded uppercase tracking-wider">
-                  RÉF: #GC-{demande.id}
+                  RÉF: #MES-{demande.id}
                 </CardTitle>
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 uppercase border border-slate-200">
                   {demande.type ? TYPE_LABELS[demande.type] ?? demande.type : 'Projet Standard'}
