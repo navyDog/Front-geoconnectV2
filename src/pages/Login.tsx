@@ -6,8 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
 import { loginCall } from '../api/auth';
-import { KeyRound } from 'lucide-react';
-
 export default function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm();
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +18,7 @@ export default function Login() {
     setError(null);
     try {
       const authRes = await loginCall({
-        email: data.email,
+        login: data.login,
         password: data.password
       });
       login(authRes);
@@ -57,11 +55,11 @@ export default function Login() {
               </div>
             )}
             <Input
-              label="Identifiant"
+              label="Identifiant (email)"
               type="email"
               placeholder="votre@email.com"
-              {...register('email', { required: true })}
-              error={errors.email ? "Requis" : undefined}
+              {...register('login', { required: true })}
+              error={errors.login ? "Requis" : undefined}
             />
             <Input
               label="Mot de Passe"

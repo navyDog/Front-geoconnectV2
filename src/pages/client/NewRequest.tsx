@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDemandeDevis } from '../../api/demandeDevis';
 import { getAllClients } from '../../api/client';
-import { MapPin } from 'lucide-react';
+import { uploadDocument } from '../../api/document';
+import { MapPin, Paperclip } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { TypeDemandeDevis } from '../../types';
 
 export default function NewRequest() {
   const navigate = useNavigate();
@@ -15,6 +17,8 @@ export default function NewRequest() {
   const { register: formRegister, handleSubmit, formState: { errors } } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorDetails, setErrorDetails] = useState('');
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -24,21 +28,32 @@ export default function NewRequest() {
 
       const allClients = await getAllClients();
       const myClient = allClients.find(c => c.utilisateurId === user.userId);
-      
+
       if (!myClient || !myClient.id) {
-          throw new Error("Compte client introuvable pour cet utilisateur.");
+        throw new Error("Compte client introuvable pour cet utilisateur.");
+      }
+
+      // Upload du document joint (optionnel)
+      let docsDevisId: number | undefined;
+      if (docFile) {
+        const uploaded = await uploadDocument(docFile);
+        docsDevisId = uploaded.id;
       }
 
       await createDemandeDevis({
         clientId: myClient.id,
         delaiMax: data.delaiMax || undefined,
-        typeProjet: data.typeProjet,
+        type: data.type as TypeDemandeDevis,
         description: data.description,
+        nombreLot: data.nombreLot ? Number(data.nombreLot) : undefined,
+        referenceCadastrale: data.referenceCadastrale || undefined,
+        superficie: data.superficie ? Number(data.superficie) : undefined,
+        docsDevisId,
         adresseProjet: {
-          rue: data.rueProjet || "Non renseigné",
+          rue: data.rueProjet || 'Non renseigné',
           codePostal: data.codePostal,
           ville: data.ville,
-        }
+        },
       });
 
       navigate('/client/dashboard');
@@ -53,8 +68,8 @@ export default function NewRequest() {
   return (
     <div className="max-w-2xl mx-auto py-12 px-4 sm:px-6">
       <div className="mb-8 text-center">
-         <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">Nouvelle demande géotechnique</h1>
-         <p className="text-slate-500">Décrivez votre projet en quelques étapes simples.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">Nouvelle demande géotechnique</h1>
+        <p className="text-slate-500">Décrivez votre projet en quelques étapes simples.</p>
       </div>
 
       {errorDetails && (
@@ -66,60 +81,114 @@ export default function NewRequest() {
       <Card className="border-slate-200 shadow-sm overflow-hidden">
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardHeader className="bg-slate-50 border-b border-slate-100 pb-4">
-              <CardTitle className="text-lg flex items-center text-slate-800">
-                <MapPin className="w-5 h-5 mr-2 text-slate-400" />
-                Détails du projet
-              </CardTitle>
+            <CardTitle className="text-lg flex items-center text-slate-800">
+              <MapPin className="w-5 h-5 mr-2 text-slate-400" />
+              Détails du projet
+            </CardTitle>
+            <CardDescription>Renseignez les informations de votre mission géotechnique.</CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-6">
-              <div className="space-y-4">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Type de projet *</label>
-                    <select 
-                      className="w-full h-11 px-3 py-2 bg-white border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400 transition-colors"
-                      {...formRegister('typeProjet', { required: true })}
-                    >
-                      <option value="">Sélectionner...</option>
-                      <option value="Maison Individuelle">Maison Individuelle</option>
-                      <option value="Extension">Extension</option>
-                      <option value="Piscine">Piscine</option>
-                      <option value="Immeuble Collectif">Immeuble Collectif</option>
-                      <option value="Local Commercial">Local Commercial</option>
-                    </select>
-                    {errors.typeProjet && <span className="text-red-500 text-xs mt-1 block">Ce champ est requis</span>}
-                  </div>
-                  
-                  <Input
-                    label="Description ou particularités du projet"
-                    placeholder="Brief description (ex: terrain très en pente...)"
-                    {...formRegister('description')}
-                  />
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <Input
-                        label="Rue"
-                        placeholder="Ex : 15 Avenue des Champs-Élysées"
-                        {...formRegister('rueProjet')}
-                      />
-                      <Input
-                        label="Code Postal *"
-                        placeholder="Ex : 75001"
-                        {...formRegister('codePostal', { required: true })}
-                        error={errors.codePostal ? "Requis" : undefined}
-                      />
-                      <Input
-                        label="Ville *"
-                        placeholder="Ex : Paris"
-                        {...formRegister('ville', { required: true })}
-                        error={errors.ville ? "Requis" : undefined}
-                      />
-                      <Input
-                        type="date"
-                        label="Date de remise souhaitée"
-                        {...formRegister('delaiMax')}
-                      />
-                  </div>
+            <div className="space-y-4">
+              {/* Type de mission */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Type de mission *
+                </label>
+                <select
+                  className="w-full h-11 px-3 py-2 bg-white border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400 transition-colors"
+                  {...formRegister('type', { required: true })}
+                >
+                  <option value="">Sélectionner...</option>
+                  <option value="G1">G1 — Étude de site</option>
+                  <option value="G2_AVP">G2 AVP — Avant-projet</option>
+                  <option value="G2_PRO">G2 PRO — Projet</option>
+                </select>
+                {errors.type && <span className="text-red-500 text-xs mt-1 block">Ce champ est requis</span>}
               </div>
+
+              <Input
+                label="Description ou particularités du projet"
+                placeholder="Ex : terrain en pente, nappe phréatique connue..."
+                {...formRegister('description')}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="Référence cadastrale"
+                  placeholder="Ex : AB 0042"
+                  {...formRegister('referenceCadastrale')}
+                />
+                <Input
+                  label="Superficie (m²)"
+                  type="number"
+                  placeholder="Ex : 500"
+                  {...formRegister('superficie')}
+                />
+                <Input
+                  label="Nombre de lots"
+                  type="number"
+                  placeholder="Ex : 1"
+                  {...formRegister('nombreLot')}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Input
+                  label="Rue"
+                  placeholder="Ex : 15 Avenue des Champs-Élysées"
+                  {...formRegister('rueProjet')}
+                />
+                <Input
+                  label="Code Postal *"
+                  placeholder="Ex : 75001"
+                  {...formRegister('codePostal', { required: true })}
+                  error={errors.codePostal ? 'Requis' : undefined}
+                />
+                <Input
+                  label="Ville *"
+                  placeholder="Ex : Paris"
+                  {...formRegister('ville', { required: true })}
+                  error={errors.ville ? 'Requis' : undefined}
+                />
+                <Input
+                  type="date"
+                  label="Date de remise souhaitée"
+                  {...formRegister('delaiMax')}
+                />
+              </div>
+
+              {/* Document joint */}
+              <div>
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Document joint (plans, cahier des charges…)
+                </label>
+                <div
+                  className="flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="text-sm text-slate-500 truncate">
+                    {docFile ? docFile.name : 'Joindre un fichier (PDF, image…)'}
+                  </span>
+                  {docFile && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDocFile(null); }}
+                      className="ml-auto text-slate-400 hover:text-red-500 text-xs font-bold"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
+            </div>
           </CardContent>
           <CardFooter className="bg-slate-50 border-t border-slate-100 py-4 flex justify-end">
             <Button
@@ -130,10 +199,7 @@ export default function NewRequest() {
             >
               Annuler
             </Button>
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-            >
+            <Button type="submit" isLoading={isSubmitting}>
               Créer la demande
             </Button>
           </CardFooter>

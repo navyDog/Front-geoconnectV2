@@ -43,20 +43,7 @@
             }
           },
           "200": {
-            "description": "Liste des propositions de devis",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Aucune proposition de devis trouvée",
+            "description": "Liste des propositions de devis (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -157,7 +144,7 @@
           "403": {
             "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
           },
-          "201": {
+          "200": {
             "description": "Proposition de devis créée avec succès"
           },
           "400": {
@@ -182,19 +169,6 @@
         "summary": "Get all etudes",
         "operationId": "getAllEtudes",
         "responses": {
-          "200": {
-            "description": "Liste des etudes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtudeDTO"
-                  }
-                }
-              }
-            }
-          },
           "403": {
             "description": "Droits insuffisants",
             "content": {
@@ -208,8 +182,8 @@
               }
             }
           },
-          "204": {
-            "description": "Aucune etude trouvée",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -221,8 +195,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "200": {
+            "description": "Liste des etudes (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -272,7 +246,7 @@
         },
         "responses": {
           "403": {
-            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+            "description": "Réservé aux rôles ADMIN et CLIENT"
           },
           "400": {
             "description": "Bad Request"
@@ -307,11 +281,11 @@
           "required": true
         },
         "responses": {
-          "403": {
-            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
-          },
-          "201": {
+          "200": {
             "description": "Etude créée avec succès"
+          },
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT"
           },
           "400": {
             "description": "Bad Request"
@@ -348,32 +322,6 @@
               }
             }
           },
-          "200": {
-            "description": "Liste des demandeDevis",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DemandeDevisDTO"
-                  }
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Aucun demandeDevis trouvé",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DemandeDevisDTO"
-                  }
-                }
-              }
-            }
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -389,6 +337,19 @@
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des demandeDevis (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -469,7 +430,7 @@
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
           },
-          "201": {
+          "200": {
             "description": "DemandeDevis créée avec succès"
           }
         },
@@ -488,34 +449,21 @@
         "summary": "Get all clients",
         "operationId": "getAllClients",
         "responses": {
+          "200": {
+            "description": "Liste des clients (vide si aucune)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClientDTO"
+                  }
+                }
+              }
+            }
+          },
           "403": {
             "description": "Droits insuffisants",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ClientDTO"
-                  }
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Liste des clients",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ClientDTO"
-                  }
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Aucun client trouvé",
             "content": {
               "application/json": {
                 "schema": {
@@ -654,21 +602,8 @@
               }
             }
           },
-          "204": {
-            "description": "Aucun bureau d'étude trouvé",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BureauEtudesDTO"
-                  }
-                }
-              }
-            }
-          },
           "200": {
-            "description": "Liste des bureaux d'étude",
+            "description": "Liste des bureaux d'étude (vide si aucun)",
             "content": {
               "application/json": {
                 "schema": {
@@ -786,6 +721,70 @@
         ]
       }
     },
+    "/documents/upload": {
+      "post": {
+        "tags": [
+          "document-controller"
+        ],
+        "summary": "Uploader un document",
+        "operationId": "upload",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploadé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fichier vide ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/auth/register": {
       "post": {
         "tags": [
@@ -805,7 +804,7 @@
         },
         "responses": {
           "400": {
-            "description": "Corps de la requête invalide (email, mot de passe ou rôle manquant/invalide)",
+            "description": "Corps de la requête invalide (login, mot de passe ou rôle manquant/invalide)",
             "content": {
               "*/*": {
                 "schema": {
@@ -845,6 +844,16 @@
           "required": true
         },
         "responses": {
+          "400": {
+            "description": "Corps de la requête invalide (login ou mot de passe manquant)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDTO"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Email ou mot de passe incorrect",
             "content": {
@@ -857,16 +866,6 @@
           },
           "200": {
             "description": "Authentification réussie, token JWT retourné",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuthResponseDTO"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Corps de la requête invalide (email ou mot de passe manquant)",
             "content": {
               "*/*": {
                 "schema": {
@@ -1092,19 +1091,6 @@
               }
             }
           },
-          "204": {
-            "description": "Aucune proposition de devis trouvée",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          },
           "400": {
             "description": "Bad Request",
             "content": {
@@ -1132,7 +1118,7 @@
             }
           },
           "200": {
-            "description": "Trouve toutes les propositions de devis à partir de l'ID de la demande de devis",
+            "description": "Trouve toutes les propositions de devis à partir de l'ID de la demande de devis (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1184,32 +1170,6 @@
               }
             }
           },
-          "204": {
-            "description": "Aucune proposition de devis trouvée",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Trouve toutes les propositions de devis à partir de l'ID du bureau d'étude",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          },
           "404": {
             "description": "Bureau d'étude introuvable",
             "content": {
@@ -1238,6 +1198,19 @@
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Trouve toutes les propositions de devis à partir de l'ID du bureau d'étude (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1430,20 +1403,7 @@
             }
           },
           "200": {
-            "description": "Trouve toutes les etudes à partir de l'ID du client",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtudeDTO"
-                  }
-                }
-              }
-            }
-          },
-          "204": {
-            "description": "Aucune etude trouvée",
+            "description": "Trouve toutes les etudes à partir de l'ID du client (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1508,19 +1468,6 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Trouve toutes les etudes à partir de l'ID du bureau d'étude",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EtudeDTO"
-                  }
-                }
-              }
-            }
-          },
           "403": {
             "description": "Droits insuffisants",
             "content": {
@@ -1534,8 +1481,8 @@
               }
             }
           },
-          "204": {
-            "description": "Aucune etude trouvée",
+          "404": {
+            "description": "Bureau d'étude introuvable",
             "content": {
               "application/json": {
                 "schema": {
@@ -1547,8 +1494,8 @@
               }
             }
           },
-          "404": {
-            "description": "Bureau d'étude introuvable",
+          "200": {
+            "description": "Trouve toutes les etudes à partir de l'ID du bureau d'étude (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1582,6 +1529,108 @@
                   "items": {
                     "$ref": "#/components/schemas/EtudeDTO"
                   }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/documents": {
+      "get": {
+        "tags": [
+          "document-controller"
+        ],
+        "summary": "Lister tous les documents",
+        "operationId": "getAll",
+        "responses": {
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/documents/{id}/download": {
+      "get": {
+        "tags": [
+          "document-controller"
+        ],
+        "summary": "Télécharger un document par son ID",
+        "operationId": "download",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Document introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Flux binaire du fichier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -1766,21 +1815,8 @@
               }
             }
           },
-          "204": {
-            "description": "Aucun demandeDevis trouvé",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DemandeDevisDTO"
-                  }
-                }
-              }
-            }
-          },
           "200": {
-            "description": "Trouve tous les demandeDevis à partir de l'ID du client",
+            "description": "Trouve tous les demandeDevis à partir de l'ID du client (vide si aucune)",
             "content": {
               "application/json": {
                 "schema": {
@@ -2079,6 +2115,45 @@
           }
         ]
       }
+    },
+    "/documents/{id}": {
+      "delete": {
+        "tags": [
+          "document-controller"
+        ],
+        "summary": "Supprimer un document par son ID",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Document supprimé"
+          },
+          "403": {
+            "description": "Droits insuffisants"
+          },
+          "404": {
+            "description": "Document introuvable"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -2098,18 +2173,28 @@
             "type": "integer",
             "format": "int64"
           },
-          "dateRendu": {
-            "type": "string",
-            "format": "date"
+          "delaiMaxIntervention": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "delaiMaxRendu": {
+            "type": "integer",
+            "format": "int64"
           },
           "prix": {
             "type": "number"
           },
-          "cheminDevisPdf": {
-            "type": "string"
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
           },
-          "refusee": {
-            "type": "boolean"
+          "statut": {
+            "type": "string",
+            "enum": [
+              "EN_ATTENTE",
+              "ACCEPTEE",
+              "REFUSEE"
+            ]
           }
         }
       },
@@ -2134,6 +2219,25 @@
               "RAPPORT_TERMINE",
               "PAIEMENT_EFFECTUE"
             ]
+          },
+          "devisSigneId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rapportId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "chargeAffaire": {
+            "type": "string"
+          },
+          "dateIntervention": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateRendu": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -2172,6 +2276,32 @@
           "clientId": {
             "type": "integer",
             "format": "int64"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "G1",
+              "G2_AVP",
+              "G2_PRO"
+            ]
+          },
+          "nombreLot": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "referenceCadastrale": {
+            "type": "string"
+          },
+          "superficie": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "description": {
+            "type": "string"
+          },
+          "docsDevisId": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -2182,10 +2312,24 @@
             "type": "integer",
             "format": "int64"
           },
+          "civilite": {
+            "type": "string",
+            "enum": [
+              "MR",
+              "MME",
+              "AUTRE"
+            ]
+          },
           "nom": {
             "type": "string"
           },
           "prenom": {
+            "type": "string"
+          },
+          "emailContact": {
+            "type": "string"
+          },
+          "telContact": {
             "type": "string"
           },
           "adresseFacturation": {
@@ -2222,15 +2366,48 @@
           }
         }
       },
+      "DocumentDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nomFichierOriginal": {
+            "type": "string"
+          },
+          "typeContenu": {
+            "type": "string"
+          },
+          "tailleFichier": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bucketName": {
+            "type": "string"
+          },
+          "statut": {
+            "type": "string",
+            "enum": [
+              "ORPHELIN",
+              "ATTACHE"
+            ]
+          },
+          "expireAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AuthRequestDTO": {
         "required": [
-          "email",
+          "login",
           "password",
           "role"
         ],
         "type": "object",
         "properties": {
-          "email": {
+          "login": {
             "type": "string"
           },
           "password": {
@@ -2252,7 +2429,7 @@
             "type": "integer",
             "format": "int64"
           },
-          "email": {
+          "login": {
             "type": "string"
           },
           "role": {
@@ -2262,12 +2439,12 @@
       },
       "LoginRequestDTO": {
         "required": [
-          "email",
+          "login",
           "password"
         ],
         "type": "object",
         "properties": {
-          "email": {
+          "login": {
             "type": "string"
           },
           "password": {

@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { MapPin, Clock, ChevronLeft, Building2, CheckCircle2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 
 export default function ClientRequestDetail() {
   const { id } = useParams<{ id: string }>();
@@ -95,7 +94,7 @@ export default function ClientRequestDetail() {
                 <div>
                   <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Type</span>
                   <span className="font-semibold bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-sm text-[10px]">
-                    {demande.typeProjet || 'Standard'}
+                    {demande.type || 'Standard'}
                   </span>
                 </div>
                 {demande.delaiMax && (
@@ -136,7 +135,7 @@ export default function ClientRequestDetail() {
                     <tr className="text-[10px] uppercase text-slate-400 bg-slate-50 border-b border-slate-100">
                       <th className="px-4 py-2 font-bold whitespace-nowrap">Bureau d'Études</th>
                       <th className="px-4 py-2 font-bold whitespace-nowrap text-right">Devis Est.</th>
-                      <th className="px-4 py-2 font-bold whitespace-nowrap">Date Rendu</th>
+                      <th className="px-4 py-2 font-bold whitespace-nowrap">Délai Rendu</th>
                       <th className="px-4 py-2 font-bold whitespace-nowrap text-center">Action</th>
                     </tr>
                   </thead>
@@ -157,7 +156,7 @@ export default function ClientRequestDetail() {
                             {prop.prix} €
                           </td>
                           <td className="px-4 py-3 text-slate-600">
-                            {prop.dateRendu ? format(new Date(prop.dateRendu), 'dd MMM yyyy', {locale: fr}) : '-'}
+                            {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} j`}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {isAccepted ? (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { registerCall } from '../api/auth';
@@ -8,7 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useForm } from 'react-hook-form';
 import { createClient, getAllClients } from '../api/client';
 import { createDemandeDevis } from '../api/demandeDevis';
-import { MapPin, Briefcase, Mail } from 'lucide-react';
+import { uploadDocument } from '../api/document';
+import { MapPin, Briefcase, Mail, Paperclip } from 'lucide-react';
+import { TypeDemandeDevis } from '../types';
 
 export default function Home() {
   const [step, setStep] = useState(0);
@@ -46,9 +48,11 @@ function QuoteTunnel() {
   const [formData, setFormData] = useState<any>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { login } = useAuth();
-  
+
   const { register: formRegister, handleSubmit, formState: { errors } } = useForm();
 
   const handleNext = (data: any) => {
@@ -66,56 +70,66 @@ function QuoteTunnel() {
     try {
       // 1. Register User
       const authRes = await registerCall({
-        email: data.email,
+        login: data.login,
         password: data.password,
-        role: 'CLIENT'
+        role: 'CLIENT',
       });
-      
-      // Keep user in context
+
       login(authRes);
 
       // 2. Create Client Profile
       let client = await createClient({
+        civilite: data.civilite || undefined,
         nom: data.nom,
         prenom: data.prenom,
+        emailContact: data.login,
+        telContact: data.telContact || undefined,
         utilisateurId: authRes.userId,
         adresseFacturation: {
-          rue: data.rue || "Non renseigné",
+          rue: data.rue || 'Non renseigné',
           ville: data.ville,
-          codePostal: data.codePostal // Simple mapping for MVP
-        }
+          codePostal: data.codePostal,
+        },
       });
 
       let clientId = client?.id;
 
       if (!clientId) {
-         // Some APIs return empty responses for 201 Created instead of returning the object.
-         // Let's fetch all clients and locate the one just created.
-         const allClients = await getAllClients();
-         const myClient = allClients.find(c => c.utilisateurId === authRes.userId);
-         if (myClient) {
-            clientId = myClient.id;
-         } else {
-             throw new Error("Client created but could not be located on the server.");
-         }
+        const allClients = await getAllClients();
+        const myClient = allClients.find((c) => c.utilisateurId === authRes.userId);
+        if (myClient) {
+          clientId = myClient.id;
+        } else {
+          throw new Error('Client créé mais introuvable sur le serveur.');
+        }
       }
 
-      // 3. Create DemandeDevis
+      // 3. Create DemandeDevis (avec document optionnel)
+      let docsDevisId: number | undefined;
+      if (docFile) {
+        const uploaded = await uploadDocument(docFile);
+        docsDevisId = uploaded.id;
+      }
+
       await createDemandeDevis({
-        clientId: clientId,
+        clientId,
         delaiMax: data.delaiMax || undefined,
-        typeProjet: data.typeProjet,
+        type: data.type as TypeDemandeDevis,
         description: data.description,
+        nombreLot: data.nombreLot ? Number(data.nombreLot) : undefined,
+        referenceCadastrale: data.referenceCadastrale || undefined,
+        superficie: data.superficie ? Number(data.superficie) : undefined,
+        docsDevisId,
         adresseProjet: {
-          rue: data.rueProjet || "Non renseigné",
-          codePostal: data.codePostal,
-          ville: data.ville,
-        }
+          rue: data.rueProjet || 'Non renseigné',
+          codePostal: data.codePostalProjet || data.codePostal,
+          ville: data.villeProjet || data.ville,
+        },
       });
 
       navigate('/success');
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Une erreur est survenue");
+      setError(err.response?.data?.message || err.message || 'Une erreur est survenue');
       setIsLoading(false);
     }
   };
@@ -126,15 +140,19 @@ function QuoteTunnel() {
         <div className="flex items-center justify-between">
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${
-                s <= step ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${
+                  s <= step ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-500'
+                }`}
+              >
                 {s}
               </div>
               {s < 3 && (
-                <div className={`h-1 w-16 sm:w-32 mx-2 rounded ${
-                  s < step ? 'bg-blue-600' : 'bg-slate-200'
-                }`} />
+                <div
+                  className={`h-1 w-16 sm:w-32 mx-2 rounded ${
+                    s < step ? 'bg-blue-600' : 'bg-slate-200'
+                  }`}
+                />
               )}
             </div>
           ))}
@@ -145,42 +163,51 @@ function QuoteTunnel() {
         {step === 1 && (
           <form onSubmit={handleSubmit(handleNext)}>
             <CardHeader>
-              <CardTitle className="flex items-center"><Briefcase className="w-5 h-5 mr-2 text-blue-600"/> Quel est votre besoin ?</CardTitle>
-              <CardDescription>Qualifions rapidement votre projet.</CardDescription>
+              <CardTitle className="flex items-center">
+                <Briefcase className="w-5 h-5 mr-2 text-blue-600" /> Quel est votre besoin ?
+              </CardTitle>
+              <CardDescription>Qualifions rapidement votre projet géotechnique.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Type de mission */}
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700">Type de projet *</label>
+                <label className="block text-sm font-medium text-slate-700">Type de mission *</label>
                 <select
-                  {...formRegister('typeProjet', { required: true })}
+                  {...formRegister('type', { required: true })}
                   className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Sélectionnez un type</option>
-                  <option value="GEOTECHNIQUE">Étude de sol (Géotechnique)</option>
-                  <option value="ENVIRONNEMENT">Étude environnementale</option>
-                  <option value="STRUCTURE">Étude de structure</option>
+                  <option value="G1">G1 — Étude de site</option>
+                  <option value="G2_AVP">G2 AVP — Avant-projet</option>
+                  <option value="G2_PRO">G2 PRO — Projet</option>
                 </select>
-                {errors.typeProjet && <span className="text-red-500 text-xs">Requis</span>}
+                {errors.type && <span className="text-red-500 text-xs">Requis</span>}
               </div>
+
+              {/* Adresse du projet */}
               <Input
                 label="Rue du projet"
                 placeholder="Ex : 15 Avenue des Champs-Élysées"
                 {...formRegister('rueProjet')}
               />
-              <Input
-                label="Code Postal du projet *"
-                placeholder="Ex : 75001"
-                {...formRegister('codePostal', { required: true })}
-                error={errors.codePostal ? "Requis" : undefined}
-              />
-              <Input
-                label="Ville du projet *"
-                {...formRegister('ville', { required: true })}
-                error={errors.ville ? "Requin" : undefined}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Code Postal *"
+                  placeholder="Ex : 75001"
+                  {...formRegister('codePostalProjet', { required: true })}
+                  error={errors.codePostalProjet ? 'Requis' : undefined}
+                />
+                <Input
+                  label="Ville *"
+                  {...formRegister('villeProjet', { required: true })}
+                  error={errors.villeProjet ? 'Requis' : undefined}
+                />
+              </div>
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full">Suivant</Button>
+              <Button type="submit" className="w-full">
+                Suivant
+              </Button>
             </CardFooter>
           </form>
         )}
@@ -188,7 +215,9 @@ function QuoteTunnel() {
         {step === 2 && (
           <form onSubmit={handleSubmit(handleNext)}>
             <CardHeader>
-              <CardTitle className="flex items-center"><MapPin className="w-5 h-5 mr-2 text-blue-600"/> Détails du projet</CardTitle>
+              <CardTitle className="flex items-center">
+                <MapPin className="w-5 h-5 mr-2 text-blue-600" /> Détails du projet
+              </CardTitle>
               <CardDescription>Donnez plus de contexte à votre demande.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -197,18 +226,71 @@ function QuoteTunnel() {
                 <textarea
                   {...formRegister('description', { required: true })}
                   className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-                  placeholder="Décrivez votre besoin..."
+                  placeholder="Décrivez votre besoin, contraintes particulières..."
                 />
                 {errors.description && <span className="text-red-500 text-xs">Requis</span>}
+              </div>
+              <Input
+                label="Référence cadastrale"
+                placeholder="Ex : AB 0042"
+                {...formRegister('referenceCadastrale')}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Superficie (m²)"
+                  type="number"
+                  placeholder="Ex : 500"
+                  {...formRegister('superficie')}
+                />
+                <Input
+                  label="Nombre de lots"
+                  type="number"
+                  placeholder="Ex : 1"
+                  {...formRegister('nombreLot')}
+                />
               </div>
               <Input
                 type="date"
                 label="Délai maximum souhaité (facultatif)"
                 {...formRegister('delaiMax')}
               />
+
+              {/* Document joint */}
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-700">
+                  Document joint (plans, cahier des charges…)
+                </label>
+                <div
+                  className="flex items-center gap-3 border border-dashed border-slate-300 rounded-md px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Paperclip className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span className="text-sm text-slate-500 truncate">
+                    {docFile ? docFile.name : 'Joindre un fichier (PDF, image…)'}
+                  </span>
+                  {docFile && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setDocFile(null); }}
+                      className="ml-auto text-slate-400 hover:text-red-500 text-xs font-bold"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={(e) => setDocFile(e.target.files?.[0] ?? null)}
+                />
+              </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button type="button" variant="outline" onClick={() => setStep(1)}>Retour</Button>
+              <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                Retour
+              </Button>
               <Button type="submit">Suivant</Button>
             </CardFooter>
           </form>
@@ -217,46 +299,85 @@ function QuoteTunnel() {
         {step === 3 && (
           <form onSubmit={handleSubmit(handleNext)}>
             <CardHeader>
-              <CardTitle className="flex items-center"><Mail className="w-5 h-5 mr-2 text-blue-600"/> Vos coordonnées</CardTitle>
+              <CardTitle className="flex items-center">
+                <Mail className="w-5 h-5 mr-2 text-blue-600" /> Vos coordonnées
+              </CardTitle>
               <CardDescription>Créez votre compte pour recevoir vos devis.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {error && <div className="p-3 bg-red-50 text-red-700 text-sm rounded-md">{error}</div>}
+              {error && (
+                <div className="p-3 bg-red-50 text-red-700 text-sm rounded-md">{error}</div>
+              )}
+              {/* Civilité */}
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-700">Civilité</label>
+                <select
+                  {...formRegister('civilite')}
+                  className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">—</option>
+                  <option value="MR">M.</option>
+                  <option value="MME">Mme</option>
+                  <option value="AUTRE">Autre</option>
+                </select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Prénom *"
                   {...formRegister('prenom', { required: true })}
-                  error={errors.prenom ? "Requis" : undefined}
+                  error={errors.prenom ? 'Requis' : undefined}
                 />
                 <Input
                   label="Nom *"
                   {...formRegister('nom', { required: true })}
-                  error={errors.nom ? "Requis" : undefined}
+                  error={errors.nom ? 'Requis' : undefined}
                 />
               </div>
               <Input
-                label="Rue (Adresse de facturation) *"
-                placeholder="12 rue de la République"
-                {...formRegister('rue', { required: true })}
-                error={errors.rue ? "Requis" : undefined}
+                label="Téléphone"
+                type="tel"
+                placeholder="06 00 00 00 00"
+                {...formRegister('telContact')}
               />
               <Input
+                label="Rue (adresse de facturation) *"
+                placeholder="12 rue de la République"
+                {...formRegister('rue', { required: true })}
+                error={errors.rue ? 'Requis' : undefined}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Code Postal *"
+                  {...formRegister('codePostal', { required: true })}
+                  error={errors.codePostal ? 'Requis' : undefined}
+                />
+                <Input
+                  label="Ville *"
+                  {...formRegister('ville', { required: true })}
+                  error={errors.ville ? 'Requis' : undefined}
+                />
+              </div>
+              <Input
                 type="email"
-                label="Email *"
+                label="Email (identifiant de connexion) *"
                 placeholder="votre@email.com"
-                {...formRegister('email', { required: true })}
-                error={errors.email ? "Requis" : undefined}
+                {...formRegister('login', { required: true })}
+                error={errors.login ? 'Requis' : undefined}
               />
               <Input
                 type="password"
                 label="Mot de passe *"
                 {...formRegister('password', { required: true, minLength: 6 })}
-                error={errors.password ? "Minimum 6 caractères" : undefined}
+                error={errors.password ? 'Minimum 6 caractères' : undefined}
               />
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button type="button" variant="outline" onClick={() => setStep(2)}>Retour</Button>
-              <Button type="submit" isLoading={isLoading}>Publier ma demande</Button>
+              <Button type="button" variant="outline" onClick={() => setStep(2)}>
+                Retour
+              </Button>
+              <Button type="submit" isLoading={isLoading}>
+                Publier ma demande
+              </Button>
             </CardFooter>
           </form>
         )}
