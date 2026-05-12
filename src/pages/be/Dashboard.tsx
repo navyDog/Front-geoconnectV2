@@ -7,7 +7,8 @@ import { getEtudesByBureauId, getEtudeDetailById } from '../../api/etude';
 import { DemandeDevisDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Calendar, ChevronRight, FlaskConical, MapPin, User, Building2, Clock } from 'lucide-react';
+import { Calendar, ChevronRight, FlaskConical, MapPin, User, Building2, Clock, AlertCircle } from 'lucide-react';
+import { beMustAct } from '../../components/etude/EtudeStatusBadge';
 import { Link } from 'react-router-dom';
 
 type TabType = 'OUVERT' | 'EN_ATTENTE' | 'ETUDE_EN_COURS';
@@ -228,9 +229,14 @@ export default function BEDashboard() {
         </CardContent>
         {demande?.id && (
           <CardFooter>
-            <Link to={`/be/demande/${demande.id}`} className="w-full">
-              <Button variant="outline" size="sm" className="w-full group">
-                Voir le dossier <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+            <Link to={`/be/etude/${etude.id}`} className="w-full">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`w-full group ${beMustAct(etude.etat) ? 'border-orange-400 text-orange-700 hover:bg-orange-50' : ''}`}
+              >
+                {beMustAct(etude.etat) && <AlertCircle className="w-3 h-3 mr-1.5 text-orange-500" />}
+                Gérer l'étude <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
           </CardFooter>

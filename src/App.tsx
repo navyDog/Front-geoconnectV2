@@ -14,10 +14,12 @@ import Success from './pages/Success';
 
 import ClientDashboard from './pages/client/Dashboard';
 import ClientRequestDetail from './pages/client/RequestDetail';
+import ClientEtudeDetail from './pages/client/EtudeDetail';
 import NewRequest from './pages/client/NewRequest';
 
 import BEDashboard from './pages/be/Dashboard';
 import BERequestDetail from './pages/be/RequestDetail';
+import BEEtudeDetail from './pages/be/EtudeDetail';
 import BERegister from './pages/be/BERegister';
 
 // Redirige automatiquement selon le rôle si connecté, sinon affiche Home
@@ -46,12 +48,14 @@ export default function App() {
               <Route path="/client/dashboard" element={<ClientDashboard />} />
               <Route path="/client/demande/new" element={<NewRequest />} />
               <Route path="/client/demande/:id" element={<ClientRequestDetail />} />
+              <Route path="/client/etude/:id" element={<ClientEtudeDetail />} />
             </Route>
 
             {/* BE Routes */}
             <Route element={<ProtectedRoute allowedRoles={['BUREAU_ETUDE']} />}>
               <Route path="/be/dashboard" element={<BEDashboard />} />
               <Route path="/be/demande/:id" element={<BERequestDetail />} />
+              <Route path="/be/etude/:id" element={<BEEtudeDetail />} />
             </Route>
             
             {/* Catch all */}
