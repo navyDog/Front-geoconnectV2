@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { getDemandeDevisByClientId } from '../../api/demandeDevis';
-import { getPropositionDevisByDemandeId } from '../../api/propositionDevis';
-import { getAllClients } from '../../api/client';
-import { getEtudesByClientId, getEtudeDetailById } from '../../api/etude';
-import { DemandeDevisDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { useToast } from '../../contexts/ToastContext';
+import { useClientDashboardData } from '../../hooks/useClientDashboardData';
+import { ETAT_LABELS, STATUT_LABELS, TYPE_LABELS } from '../../constants/labels';
+import { formatDateShort } from '../../lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical, Building2, AlertCircle } from 'lucide-react';
@@ -14,76 +12,18 @@ import { format } from 'date-fns';
 
 type TabType = 'DEMANDES' | 'ETUDES';
 
-const ETAT_LABELS: Record<string, { label: string; color: string }> = {
-  DEVIS_VALIDE:               { label: 'Devis validé',            color: 'bg-blue-100 text-blue-700' },
-  DATE_INTERVENTION_PROPOSEE: { label: 'Date proposée',           color: 'bg-yellow-100 text-yellow-700' },
-  DATE_INTERVENTION_FIXEE:    { label: 'Date fixée',              color: 'bg-orange-100 text-orange-700' },
-  INTERVENTION_EFFECTUEE:     { label: 'Intervention effectuée',  color: 'bg-purple-100 text-purple-700' },
-  RAPPORT_TERMINE:            { label: 'Rapport terminé',         color: 'bg-teal-100 text-teal-700' },
-  PAIEMENT_EFFECTUE:          { label: 'Paiement effectué',       color: 'bg-green-100 text-green-700' },
-};
-
-const STATUT_LABELS: Record<string, string> = {
-  EN_ATTENTE: 'En attente',
-  ACCEPTEE:   'Acceptée',
-  REFUSEE:    'Refusée',
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  G1:      'G1 — Étude de site',
-  G2_AVP:  'G2 AVP — Avant-projet',
-  G2_PRO:  'G2 PRO — Projet',
-};
-
 export default function ClientDashboard() {
-  const { user } = useAuth();
-  const [demandes, setDemandes] = useState<(DemandeDevisDTO & { propositions?: PropositionDevisDTO[] })[]>([]);
-  const [etudes, setEtudes] = useState<EtudeDetailDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { toastError } = useToast();
+  const { demandes, etudes, isLoading, error } = useClientDashboardData();
   const [activeTab, setActiveTab] = useState<TabType>('DEMANDES');
 
   useEffect(() => {
-    async function fetchData() {
-      if (!user) return;
-      try {
-        const clients = await getAllClients();
-        const myClient = clients.find(c => c.utilisateurId === user.userId);
+    if (error) toastError(error);
+  }, [error, toastError]);
 
-        if (!myClient?.id) { setIsLoading(false); return; }
-
-        const demandesData = await getDemandeDevisByClientId(myClient.id);
-
-        const [enrichedDemandes, rawEtudes] = await Promise.all([
-          Promise.all(
-            demandesData.map(async (d) => {
-              try {
-                const props = await getPropositionDevisByDemandeId(d.id!);
-                return { ...d, propositions: props || [] };
-              } catch {
-                return { ...d, propositions: [] };
-              }
-            })
-          ),
-          getEtudesByClientId(myClient.id).catch(() => []),
-        ]);
-
-        setDemandes(enrichedDemandes);
-
-        // Charger le détail complet de chaque étude via le nouvel endpoint
-        const details = await Promise.all(
-          (rawEtudes || []).map((e: EtudeDTO) =>
-            e.id ? getEtudeDetailById(e.id).catch(() => ({ ...e } as EtudeDetailDTO)) : Promise.resolve({ ...e } as EtudeDetailDTO)
-          )
-        );
-        setEtudes(details);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [user]);
+  useEffect(() => {
+    if (!isLoading && etudes.length > 0) setActiveTab('ETUDES');
+  }, [isLoading, etudes.length]);
 
   if (isLoading) {
     return (
@@ -96,22 +36,10 @@ export default function ClientDashboard() {
     );
   }
 
-  const totalDemandes = demandes.length;
-  const totalPropositions = demandes.reduce((acc, d) => acc + (d.propositions?.length || 0), 0);
   const demandesEnCours = demandes.filter(d => !d.propositions?.some(p => p.statut === 'ACCEPTEE'));
-
-  const formatDate = (value?: string) => {
-    if (!value) return '—';
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? '—' : format(parsed, 'dd/MM/yyyy');
-  };
-
-  // Statistiques sur les études
-  const etudesTotales = etudes.length;
-  const etudesTerminees = etudes.filter(e => e.etat === 'RAPPORT_TERMINE').length;
-  const etudesEnCours = etudes.filter(e =>
-    e.etat && e.etat !== 'RAPPORT_TERMINE' && e.etat !== 'PAIEMENT_EFFECTUE'
-  ).length;
+  const etudesTotales   = etudes.length;
+  const etudesTerminees = etudes.filter(e => e.etat === 'RAPPORT_TERMINE' || e.etat === 'PAIEMENT_EFFECTUE').length;
+  const etudesEnCours   = etudesTotales - etudesTerminees;
 
 
   return (
@@ -153,9 +81,9 @@ export default function ClientDashboard() {
       <div className="border-b border-slate-200">
         <nav className="-mb-px flex space-x-6">
           {[
-            { id: 'DEMANDES', label: 'Mes Demandes',    count: demandesEnCours.length },
-            { id: 'ETUDES',   label: 'Études en cours', count: etudes.length },
-          ].map((tab) => {
+            { id: 'DEMANDES', label: 'Mes Demandes',    count: demandesEnCours.length, hidden: demandesEnCours.length === 0 },
+            { id: 'ETUDES',   label: 'Études en cours', count: etudes.length,          hidden: false },
+          ].filter(tab => !tab.hidden).map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
@@ -300,7 +228,7 @@ export default function ClientDashboard() {
                       </div>
                       <div className="p-2 bg-slate-50 rounded border border-slate-100">
                         <p className="text-slate-400 font-bold uppercase tracking-wider">Délai souhaité</p>
-                        <p className="text-slate-700 font-semibold">{formatDate(demande?.delaiMax)}</p>
+                        <p className="text-slate-700 font-semibold">{formatDateShort(demande?.delaiMax)}</p>
                       </div>
                     </div>
 

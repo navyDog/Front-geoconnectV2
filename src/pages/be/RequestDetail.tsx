@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
 import { getPropositionDevisByDemandeId, createPropositionDevis } from '../../api/propositionDevis';
-import { getAllBureauEtude } from '../../api/bureauEtude';
+import { getBureauByUserId } from '../../api/bureauEtude';
 import { uploadDocument } from '../../api/document';
 import { DemandeDevisDTO, PropositionDevisDTO, BureauEtudesDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
@@ -10,24 +10,25 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { MapPin, Clock, ChevronLeft, FileCheck, Paperclip } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useForm } from 'react-hook-form';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
-
-const TYPE_LABELS: Record<string, string> = {
-  G1: 'G1 — Étude de site',
-  G2_AVP: 'G2 AVP — Avant-projet',
-  G2_PRO: 'G2 PRO — Projet',
-};
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { TYPE_LABELS } from '../../constants/labels';
 
 export default function BERequestDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { toastError, toastSuccess } = useToast();
+  const navigate = useNavigate();
   const [demande, setDemande] = useState<DemandeDevisDTO | null>(null);
   const [myProposition, setMyProposition] = useState<PropositionDevisDTO | null>(null);
+  const [allPropositions, setAllPropositions] = useState<PropositionDevisDTO[]>([]);
   const [myBureau, setMyBureau] = useState<BureauEtudesDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { register, handleSubmit, formState: { errors } } = useForm();
@@ -36,22 +37,22 @@ export default function BERequestDetail() {
     async function fetchData() {
       if (!id || !user) return;
       try {
-        const bureaux = await getAllBureauEtude();
-        const bureau = bureaux.find(b => b.utilisateurId === user.userId);
+        const bureau = await getBureauByUserId(user.userId);
         if (bureau) setMyBureau(bureau);
 
         const [demandeData, propsData] = await Promise.all([
           getDemandeDevisById(Number(id)),
-          getPropositionDevisByDemandeId(Number(id)).catch(() => []),
+          getPropositionDevisByDemandeId(Number(id)).catch((): PropositionDevisDTO[] => []),
         ]);
         setDemande(demandeData);
+        setAllPropositions(propsData || []);
 
         if (bureau?.id) {
           const mine = (propsData || []).find((p: PropositionDevisDTO) => p.bureauEtudeId === bureau.id);
           if (mine) setMyProposition(mine);
         }
-      } catch (err) {
-        console.error('Failed to fetch detail', err);
+      } catch (err: any) {
+        toastError(err?.response?.data?.message ?? err?.message ?? 'Impossible de charger la demande.');
       } finally {
         setIsLoading(false);
       }
@@ -79,9 +80,11 @@ export default function BERequestDetail() {
         documentId,
       });
       setMyProposition(newProp);
-    } catch (err) {
-      console.error(err);
-      alert('Erreur lors de la soumission');
+      setAllPropositions(prev => [...prev, newProp]);
+      toastSuccess('Proposition soumise avec succès !');
+      navigate('/be/dashboard');
+    } catch (err: any) {
+      toastError(err?.response?.data?.message ?? err?.message ?? 'Erreur lors de la soumission.');
     } finally {
       setIsSubmitting(false);
     }
@@ -96,6 +99,15 @@ export default function BERequestDetail() {
   }
 
   if (!demande) return <div>Demande introuvable.</div>;
+
+  const statusConfig: Record<string, { border: string; bg: string; text: string; title: string }> = {
+    ACCEPTEE: { border: 'border-green-200', bg: 'bg-green-50', text: 'text-green-800', title: 'Offre Acceptée' },
+    REFUSEE: { border: 'border-red-200', bg: 'bg-red-50', text: 'text-red-800', title: 'Offre Refusée' },
+    EN_ATTENTE: { border: 'border-yellow-200', bg: 'bg-yellow-50', text: 'text-yellow-800', title: 'Offre En Attente' },
+  };
+
+  const hasAccepted = allPropositions.some(p => p.statut === 'ACCEPTEE');
+  const canSubmit = !hasAccepted && (!myProposition || myProposition.statut === 'REFUSEE');
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
@@ -181,56 +193,67 @@ export default function BERequestDetail() {
 
         {/* Colonne Latérale: Actions / Proposition */}
         <div className="w-full lg:w-80 space-y-4">
-          {myProposition ? (
-            <Card className="border-green-200 bg-green-50 shadow-sm h-full">
-              <CardHeader className="pb-2 border-b border-green-100">
-                <CardTitle className="flex items-center text-green-800 text-sm">
-                  <FileCheck className="w-4 h-4 mr-2" />
-                  Offre Déposée
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-4 text-green-900 space-y-4">
-                <div>
-                  <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Montant Estimé</span>
-                  <span className="font-bold text-2xl font-mono">
-                    {myProposition.prix} € <span className="text-xs">HT</span>
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-green-100/50 p-2 rounded">
-                    <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Délai rendu</span>
-                    <span className="font-semibold text-xs">
-                      {myProposition.delaiMaxRendu == null ? '—' : `${myProposition.delaiMaxRendu} j`}
-                    </span>
-                  </div>
-                  <div className="bg-green-100/50 p-2 rounded">
-                    <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Statut</span>
-                    <span className="font-semibold text-xs">
-                      {myProposition.statut === 'REFUSEE'
-                        ? 'Refusée'
-                        : myProposition.statut === 'ACCEPTEE'
-                        ? 'Acceptée'
-                        : 'En attente'}
-                    </span>
-                  </div>
-                </div>
-                {myProposition.delaiMaxIntervention != null && (
-                  <div className="bg-green-100/50 p-2 rounded">
-                    <span className="block text-[10px] font-bold uppercase text-green-700 mb-1">Délai intervention</span>
-                    <span className="font-semibold text-xs">{myProposition.delaiMaxIntervention} j</span>
-                  </div>
-                )}
+          {hasAccepted && (!myProposition || myProposition.statut !== 'ACCEPTEE') ? (
+            <Card className="border-yellow-200 bg-yellow-50 shadow-sm">
+              <CardContent className="pt-4 text-yellow-800">
+                <p className="text-sm">Une proposition a déjà été acceptée pour cette demande. Vous ne pouvez plus soumettre d'offre.</p>
               </CardContent>
             </Card>
+          ) : myProposition ? (
+            (() => {
+              const config = statusConfig[myProposition.statut as keyof typeof statusConfig] || statusConfig.EN_ATTENTE;
+              return (
+                <Card className={`${config.border} ${config.bg} shadow-sm h-full`}>
+                  <CardHeader className="pb-2 border-b border-current">
+                    <CardTitle className={`flex items-center ${config.text} text-sm`}>
+                      <FileCheck className="w-4 h-4 mr-2" />
+                      {config.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4 text-current space-y-4">
+                    <div>
+                      <span className="block text-[10px] font-bold uppercase mb-1">Montant Estimé</span>
+                      <span className="font-bold text-2xl font-mono">
+                        {myProposition.prix} € <span className="text-xs">HT</span>
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-current/10 p-2 rounded">
+                        <span className="block text-[10px] font-bold uppercase mb-1">Délai rendu</span>
+                        <span className="font-semibold text-xs">
+                          {myProposition.delaiMaxRendu == null ? '—' : `${myProposition.delaiMaxRendu} j`}
+                        </span>
+                      </div>
+                      <div className="bg-current/10 p-2 rounded">
+                        <span className="block text-[10px] font-bold uppercase mb-1">Statut</span>
+                        <span className="font-semibold text-xs">
+                          {myProposition.statut === 'REFUSEE'
+                            ? 'Refusée'
+                            : myProposition.statut === 'ACCEPTEE'
+                            ? 'Acceptée'
+                            : 'En attente'}
+                        </span>
+                      </div>
+                    </div>
+                    {myProposition.delaiMaxIntervention != null && (
+                      <div className="bg-current/10 p-2 rounded">
+                        <span className="block text-[10px] font-bold uppercase mb-1">Délai intervention</span>
+                        <span className="font-semibold text-xs">{myProposition.delaiMaxIntervention} j</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()
           ) : (
             <Card className="border-slate-200 h-full flex flex-col">
               <CardHeader className="bg-slate-50/50 pb-3 border-b border-slate-100">
                 <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Formuler une offre
+                  {myProposition?.statut === 'REFUSEE' ? 'Resoumettre une offre' : 'Formuler une offre'}
                 </CardTitle>
                 <CardDescription className="text-[10px]">Déposez votre estimation pour ce projet</CardDescription>
               </CardHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col">
+              <form className="flex-1 flex flex-col">
                 <CardContent className="pt-4 space-y-3 flex-1">
                   <Input
                     label="PRIX D'INTERVENTION (€ HT) *"
@@ -278,8 +301,8 @@ export default function BERequestDetail() {
                   </div>
                 </CardContent>
                 <CardFooter className="bg-slate-50 border-t border-slate-100 py-3">
-                  <Button type="submit" isLoading={isSubmitting} className="w-full text-[10px]">
-                    SOUMETTRE MON OFFRE
+                  <Button type="button" isLoading={isSubmitting} className="w-full text-[10px]" onClick={() => setShowConfirmModal(true)}>
+                    {myProposition?.statut === 'REFUSEE' ? 'RESOUMETTRE MON OFFRE' : 'SOUMETTRE MON OFFRE'}
                   </Button>
                 </CardFooter>
               </form>
@@ -287,6 +310,17 @@ export default function BERequestDetail() {
           )}
         </div>
       </div>
+
+      {showConfirmModal && (
+        <ConfirmModal
+          title="Confirmer la soumission"
+          message="Êtes-vous sûr de vouloir soumettre cette offre ? Vous ne pourrez plus la modifier."
+          confirmLabel="Soumettre"
+          isLoading={isSubmitting}
+          onConfirm={async () => { setShowConfirmModal(false); await handleSubmit(onSubmit)(); }}
+          onCancel={() => setShowConfirmModal(false)}
+        />
+      )}
     </div>
   );
 }

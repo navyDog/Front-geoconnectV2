@@ -1,78 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { getAllDemandeDevis } from '../../api/demandeDevis';
-import { getPropositionDevisByBureauId } from '../../api/propositionDevis';
-import { getAllBureauEtude } from '../../api/bureauEtude';
-import { getEtudesByBureauId, getEtudeDetailById } from '../../api/etude';
-import { DemandeDevisDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../../types';
+import { useBEDashboardData } from '../../hooks/useBEDashboardData';
+import { useToast } from '../../contexts/ToastContext';
+import { ETAT_LABELS, STATUT_LABELS, TYPE_LABELS } from '../../constants/labels';
+import { formatDateShort } from '../../lib/formatters';
+import { DemandeDevisDTO, PropositionDevisDTO, EtudeDetailDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Calendar, ChevronRight, FlaskConical, MapPin, User, Building2, Clock, AlertCircle } from 'lucide-react';
+import { Calendar, ChevronRight, FlaskConical, User, Clock, AlertCircle } from 'lucide-react';
 import { beMustAct } from '../../components/etude/EtudeStatusBadge';
 import { Link } from 'react-router-dom';
 
 type TabType = 'OUVERT' | 'EN_ATTENTE' | 'ETUDE_EN_COURS';
 
-const ETAT_LABELS: Record<string, { label: string; color: string }> = {
-  DEVIS_VALIDE:                 { label: 'Devis validé',               color: 'bg-blue-100 text-blue-700' },
-  DATE_INTERVENTION_PROPOSEE:   { label: 'Date proposée',              color: 'bg-yellow-100 text-yellow-700' },
-  DATE_INTERVENTION_FIXEE:      { label: 'Date fixée',                 color: 'bg-orange-100 text-orange-700' },
-  INTERVENTION_EFFECTUEE:       { label: 'Intervention effectuée',     color: 'bg-purple-100 text-purple-700' },
-  RAPPORT_TERMINE:              { label: 'Rapport terminé',            color: 'bg-teal-100 text-teal-700' },
-  PAIEMENT_EFFECTUE:            { label: 'Paiement effectué',          color: 'bg-green-100 text-green-700' },
-};
-
-const STATUT_LABELS: Record<string, string> = {
-  EN_ATTENTE: 'En attente',
-  ACCEPTEE:   'Acceptée',
-  REFUSEE:    'Refusée',
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  G1:      'G1 — Étude de site',
-  G2_AVP:  'G2 AVP — Avant-projet',
-  G2_PRO:  'G2 PRO — Projet',
-};
-
 export default function BEDashboard() {
-  const { user } = useAuth();
-  const [demandes, setDemandes] = useState<DemandeDevisDTO[]>([]);
-  const [propositions, setPropositions] = useState<PropositionDevisDTO[]>([]);
-  const [etudes, setEtudes] = useState<EtudeDetailDTO[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { toastError } = useToast();
+  const { demandes, allPropositionsPerDemande, myPropositions, etudes, isLoading, error } = useBEDashboardData();
   const [activeTab, setActiveTab] = useState<TabType>('OUVERT');
 
   useEffect(() => {
-    async function fetchData() {
-      if (!user) return;
-      try {
-        const bureaux = await getAllBureauEtude();
-        const myBureau = bureaux.find(b => b.utilisateurId === user.userId);
-
-        const [allDemandes, myProps, rawEtudes] = await Promise.all([
-          getAllDemandeDevis(),
-          myBureau?.id ? getPropositionDevisByBureauId(myBureau.id).catch(() => []) : Promise.resolve([]),
-          myBureau?.id ? getEtudesByBureauId(myBureau.id).catch(() => []) : Promise.resolve([]),
-        ]);
-
-        setDemandes(allDemandes || []);
-        setPropositions(myProps || []);
-
-        // Charger le détail complet de chaque étude via le nouvel endpoint
-        const details = await Promise.all(
-          (rawEtudes || []).map((e: EtudeDTO) =>
-            e.id ? getEtudeDetailById(e.id).catch(() => ({ ...e } as EtudeDetailDTO)) : Promise.resolve({ ...e } as EtudeDetailDTO)
-          )
-        );
-        setEtudes(details);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [user]);
+    if (error) toastError(error);
+  }, [error, toastError]);
 
   if (isLoading) {
     return (
@@ -82,15 +29,13 @@ export default function BEDashboard() {
     );
   }
 
-  const myPropDemandeIds = new Set(propositions.map(p => p.demandeDevisId));
-  const openDemandes = demandes.filter(d => !myPropDemandeIds.has(d.id));
-  const pendingProps = propositions.filter(p => p.statut === 'EN_ATTENTE');
-
-  const formatDate = (value?: string) => {
-    if (!value) return '—';
-    const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('fr-FR');
-  };
+  const myPropDemandeIds = new Set(myPropositions.map(p => p.demandeDevisId));
+  const openDemandes = demandes.filter((d, i) => {
+    const props = allPropositionsPerDemande[i] ?? [];
+    const hasAccepted = props.some(p => p.statut === 'ACCEPTEE');
+    return !myPropDemandeIds.has(d.id) && !hasAccepted;
+  });
+  const pendingProps = myPropositions.filter(p => p.statut === 'EN_ATTENTE');
 
   const renderDemandeCard = (demande: DemandeDevisDTO, prop?: PropositionDevisDTO) => (
     <Card key={demande.id} className={prop ? "border-slate-200" : "border-blue-200"}>
@@ -188,18 +133,18 @@ export default function BEDashboard() {
             </div>
             <div className="p-2 bg-slate-50 rounded border border-slate-100">
               <p className="text-slate-400 font-bold uppercase tracking-wider">Délai client</p>
-              <p className="font-semibold text-slate-700">{formatDate(demande?.delaiMax)}</p>
+              <p className="font-semibold text-slate-700">{formatDateShort(demande?.delaiMax)}</p>
             </div>
-            {demande?.superficie && (
+            {Boolean(demande?.superficie) && (
               <div className="p-2 bg-slate-50 rounded border border-slate-100">
                 <p className="text-slate-400 font-bold uppercase tracking-wider">Superficie</p>
-                <p className="font-semibold text-slate-700">{demande.superficie} m²</p>
+                <p className="font-semibold text-slate-700">{demande!.superficie} m²</p>
               </div>
             )}
-            {demande?.nombreLot && (
+            {Boolean(demande?.nombreLot) && (
               <div className="p-2 bg-slate-50 rounded border border-slate-100">
                 <p className="text-slate-400 font-bold uppercase tracking-wider">Lots</p>
-                <p className="font-semibold text-slate-700">{demande.nombreLot}</p>
+                <p className="font-semibold text-slate-700">{demande!.nombreLot}</p>
               </div>
             )}
           </div>
@@ -208,10 +153,10 @@ export default function BEDashboard() {
           <div className="p-2 bg-blue-50/50 rounded border border-blue-100 text-[11px]">
             <p className="text-blue-700 font-bold uppercase tracking-wider mb-1">Votre proposition</p>
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-700">
-              <p>Montant : <span className="font-semibold">{prop?.prix != null ? `${prop.prix} €` : '—'}</span></p>
+              <p>Montant : <span className="font-semibold">{prop?.prix == null ? '—' : `${prop.prix} €`}</span></p>
               <p>Statut : <span className="font-semibold">{prop?.statut ? (STATUT_LABELS[prop.statut] ?? prop.statut) : '—'}</span></p>
-              <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu != null ? `${prop.delaiMaxRendu} j` : '—'}</span></p>
-              <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention != null ? `${prop.delaiMaxIntervention} j` : '—'}</span></p>
+              <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} j`}</span></p>
+              <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention == null ? '—' : `${prop.delaiMaxIntervention} j`}</span></p>
             </div>
           </div>
 
@@ -219,15 +164,15 @@ export default function BEDashboard() {
           <div className="grid grid-cols-2 gap-2 text-[11px]">
             <div className="p-2 bg-slate-50 rounded border border-slate-100">
               <p className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><Clock className="w-3 h-3"/>Intervention</p>
-              <p className="font-semibold text-slate-700">{formatDate(etude.dateIntervention)}</p>
+              <p className="font-semibold text-slate-700">{formatDateShort(etude.dateIntervention)}</p>
             </div>
             <div className="p-2 bg-slate-50 rounded border border-slate-100">
               <p className="text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1"><Clock className="w-3 h-3"/>Rendu</p>
-              <p className="font-semibold text-slate-700">{formatDate(etude.dateRendu)}</p>
+              <p className="font-semibold text-slate-700">{formatDateShort(etude.dateRendu)}</p>
             </div>
           </div>
         </CardContent>
-        {demande?.id && (
+        {Boolean(demande?.id) && (
           <CardFooter>
             <Link to={`/be/etude/${etude.id}`} className="w-full">
               <Button

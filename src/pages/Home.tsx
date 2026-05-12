@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../components/ui/Card';
 import { useForm } from 'react-hook-form';
-import { createClient, getAllClients } from '../api/client';
+import { createClient, getClientByUserId } from '../api/client';
 import { createDemandeDevis } from '../api/demandeDevis';
 import { uploadDocument } from '../api/document';
 import { MapPin, Briefcase, Mail, Paperclip } from 'lucide-react';
@@ -95,9 +95,8 @@ function QuoteTunnel() {
       let clientId = client?.id;
 
       if (!clientId) {
-        const allClients = await getAllClients();
-        const myClient = allClients.find((c) => c.utilisateurId === authRes.userId);
-        if (myClient) {
+        const myClient = await getClientByUserId(authRes.userId);
+        if (myClient?.id) {
           clientId = myClient.id;
         } else {
           throw new Error('Client créé mais introuvable sur le serveur.');

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDemandeDevis } from '../../api/demandeDevis';
-import { getAllClients } from '../../api/client';
+import { getClientByUserId } from '../../api/client';
 import { uploadDocument } from '../../api/document';
 import { MapPin, Paperclip } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
@@ -26,10 +26,9 @@ export default function NewRequest() {
     try {
       if (!user) throw new Error("Vous n'êtes pas connecté.");
 
-      const allClients = await getAllClients();
-      const myClient = allClients.find(c => c.utilisateurId === user.userId);
+      const myClient = await getClientByUserId(user.userId);
 
-      if (!myClient || !myClient.id) {
+      if (!myClient?.id) {
         throw new Error("Compte client introuvable pour cet utilisateur.");
       }
 

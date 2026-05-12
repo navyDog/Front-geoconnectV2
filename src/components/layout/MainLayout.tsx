@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
-import { getAllClients } from '../../api/client';
-import { getAllBureauEtude } from '../../api/bureauEtude';
+import { getClientByUserId } from '../../api/client';
+import { getBureauByUserId } from '../../api/bureauEtude';
 
 export default function MainLayout() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -20,23 +20,20 @@ export default function MainLayout() {
 
       try {
         if (user.role === 'CLIENT') {
-          const clients = await getAllClients();
-          const myClient = clients.find((c) => c.utilisateurId === user.userId);
+          const myClient = await getClientByUserId(user.userId);
           const fullName = [myClient?.prenom, myClient?.nom].filter(Boolean).join(' ').trim();
           setIdentityLabel(fullName || 'Client');
           return;
         }
 
         if (user.role === 'BUREAU_ETUDE') {
-          const bureaux = await getAllBureauEtude();
-          const myBureau = bureaux.find((b) => b.utilisateurId === user.userId);
+          const myBureau = await getBureauByUserId(user.userId);
           setIdentityLabel(myBureau?.raisonSociale || 'Bureau d\'Études');
           return;
         }
 
         setIdentityLabel(user.login || 'Utilisateur');
-      } catch (error) {
-        console.error('Failed to load identity label', error);
+      } catch {
         setIdentityLabel(user.role === 'BUREAU_ETUDE' ? 'Bureau d\'Études' : 'Client');
       }
     }

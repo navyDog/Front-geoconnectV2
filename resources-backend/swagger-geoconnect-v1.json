@@ -322,8 +322,8 @@
               }
             }
           },
-          "403": {
-            "description": "Droits insuffisants",
+          "400": {
+            "description": "Bad Request",
             "content": {
               "application/json": {
                 "schema": {
@@ -335,8 +335,8 @@
               }
             }
           },
-          "400": {
-            "description": "Bad Request",
+          "403": {
+            "description": "Réservé au rôle ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -422,16 +422,44 @@
         },
         "responses": {
           "403": {
-            "description": "Réservé aux rôles ADMIN et CLIENT"
+            "description": "Réservé aux rôles ADMIN et CLIENT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Token JWT absent, expiré ou invalide"
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
           },
           "201": {
-            "description": "Client créé avec succès"
+            "description": "Client créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -449,19 +477,6 @@
         "summary": "Get all bureau d'étude",
         "operationId": "getAllBureauEtude",
         "responses": {
-          "403": {
-            "description": "Droits insuffisants",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BureauEtudesDTO"
-                  }
-                }
-              }
-            }
-          },
           "200": {
             "description": "Liste des bureaux d'étude (vide si aucun)",
             "content": {
@@ -477,6 +492,19 @@
           },
           "400": {
             "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BureauEtudesDTO"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Réservé au rôle ADMIN",
             "content": {
               "application/json": {
                 "schema": {
@@ -562,16 +590,44 @@
         },
         "responses": {
           "403": {
-            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
           },
           "201": {
-            "description": "Bureau d'étude créé avec succès"
+            "description": "Bureau d'étude créé avec succès",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
           },
           "401": {
-            "description": "Token JWT absent, expiré ou invalide"
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2232,7 +2288,7 @@
         "tags": [
           "client-controller"
         ],
-        "summary": "Get one  client by ID",
+        "summary": "Get one client by ID",
         "operationId": "getClientById",
         "parameters": [
           {
@@ -2345,6 +2401,62 @@
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/client/me": {
+      "get": {
+        "tags": [
+          "client-controller"
+        ],
+        "summary": "Get my client profile",
+        "operationId": "getMyProfile",
+        "responses": {
+          "403": {
+            "description": "Réservé au rôle CLIENT",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Aucun profil client lié à cet utilisateur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Profil client de l'utilisateur connecté",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientDTO"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2472,6 +2584,62 @@
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/bureauEtude/me": {
+      "get": {
+        "tags": [
+          "bureau-etudes-controller"
+        ],
+        "summary": "Get my bureau d'étude profile",
+        "operationId": "getMyBureau",
+        "responses": {
+          "200": {
+            "description": "Profil bureau d'étude de l'utilisateur connecté",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Aucun bureau d'études lié à cet utilisateur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BureauEtudesDTO"
+                }
+              }
+            }
           }
         },
         "security": [

@@ -36,6 +36,11 @@ export const accepterPropositionDevis = async (id: number) => {
   return data;
 };
 
+export const refuserPropositionDevis = async (id: number) => {
+  const { data } = await api.patch(`/propositionDevis/${id}/refuser`);
+  return data;
+};
+
 export const deletePropositionDevis = async (id: number): Promise<void> => {
   await api.delete(`/propositionDevis/${id}`);
 };

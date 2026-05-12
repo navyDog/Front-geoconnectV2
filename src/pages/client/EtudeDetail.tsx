@@ -11,27 +11,19 @@ import {
   ChevronLeft, MapPin, Building2, FileText,
   CheckCircle2, XCircle, CreditCard, AlertCircle, Download, Clock,
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-
-const TYPE_LABELS: Record<string, string> = {
-  G1:     'G1 — Étude de site',
-  G2_AVP: 'G2 AVP — Avant-projet',
-  G2_PRO: 'G2 PRO — Projet',
-};
-
-const formatDate = (value?: string): string | null => {
-  if (!value) return null;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : format(parsed, 'dd MMMM yyyy', { locale: fr });
-};
+import { TYPE_LABELS } from '../../constants/labels';
+import { formatDateLong } from '../../lib/formatters';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function ClientEtudeDetail() {
   const { id } = useParams<{ id: string }>();
+  const { toastError } = useToast();
   const [etude, setEtude] = useState<EtudeDetailDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => { if (error) toastError(error); }, [error, toastError]);
 
   const fetchEtude = useCallback(async () => {
     if (!id) return;
@@ -164,11 +156,11 @@ export default function ClientEtudeDetail() {
             <CardContent className="pt-3 space-y-2 text-xs">
               <div className="flex justify-between p-2 rounded bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Intervention</span>
-                <span className="font-semibold text-slate-800">{formatDate(etude.dateIntervention) ?? '—'}</span>
+                <span className="font-semibold text-slate-800">{formatDateLong(etude.dateIntervention) ?? '—'}</span>
               </div>
               <div className="flex justify-between p-2 rounded bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Rendu</span>
-                <span className="font-semibold text-slate-800">{formatDate(etude.dateRendu) ?? '—'}</span>
+                <span className="font-semibold text-slate-800">{formatDateLong(etude.dateRendu) ?? '—'}</span>
               </div>
               {etude.rapportId != null && (
                 <button
@@ -239,7 +231,7 @@ interface ClientStepActionsProps {
 }
 
 function ClientStepActions({ etat, etude, isLoading, onValiderDate, onRefuserDate, onConfirmerPaiement }: ClientStepActionsProps) {
-  const dateProposee = formatDate(etude.dateIntervention);
+  const dateProposee = formatDateLong(etude.dateIntervention);
 
   switch (etat) {
     case 'DATE_INTERVENTION_PROPOSEE':
