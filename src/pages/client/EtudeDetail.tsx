@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { getEtudeDetailById, validerDateIntervention, refuserDateIntervention, confirmerPaiement } from '../../api/etude';
 import { openDocument } from '../../api/document';
 import { EtudeDetailDTO, EtatEtude } from '../../types';
+import { DocumentList } from '../../components/etude/DocumentList';
+import { buildEtudeDocuments } from '../../lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EtudeStatusBadge, clientMustAct } from '../../components/etude/EtudeStatusBadge';
@@ -186,6 +188,7 @@ export default function ClientEtudeDetail() {
               </CardContent>
             </Card>
           )}
+          <DocumentList documents={buildEtudeDocuments(etude)} />
         </div>
 
         {/* Colonne droite : stepper */}

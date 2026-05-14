@@ -8,6 +8,8 @@ import {
 } from '../../api/etude';
 import { uploadDocument, openDocument } from '../../api/document';
 import { EtudeDetailDTO, EtatEtude } from '../../types';
+import { DocumentList } from '../../components/etude/DocumentList';
+import { buildEtudeDocuments } from '../../lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { EtudeStatusBadge, beMustAct } from '../../components/etude/EtudeStatusBadge';
@@ -204,6 +206,7 @@ export default function BEEtudeDetail() {
               </CardContent>
             </Card>
           )}
+          <DocumentList documents={buildEtudeDocuments(etude)} />
         </div>
 
         {/* Colonne droite : stepper */}
