@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthResponseDTO } from '../types';
+import { logoutCall } from '../api/auth';
 
 interface AuthContextType {
   user: AuthResponseDTO | null;
@@ -11,32 +12,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const SESSION_KEY = 'user';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthResponseDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    if (storedUser && token) {
+    const stored = sessionStorage.getItem(SESSION_KEY);
+    if (stored) {
       try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
+        setUser(JSON.parse(stored));
+      } catch {
         console.error('Failed to parse user from local storage');
+        sessionStorage.removeItem(SESSION_KEY);
       }
     }
     setIsLoading(false);
   }, []);
 
   const login = (userData: AuthResponseDTO) => {
-    localStorage.setItem('token', userData.token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logoutCall().catch(() => {});
+    sessionStorage.removeItem(SESSION_KEY);
     setUser(null);
   };
 

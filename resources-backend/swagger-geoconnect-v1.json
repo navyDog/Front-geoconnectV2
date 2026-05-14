@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8080/api",
       "description": "Generated server url"
     }
   ],
@@ -805,7 +805,7 @@
         ]
       }
     },
-    "/api/auth/register": {
+    "/auth/register": {
       "post": {
         "tags": [
           "auth-controller"
@@ -823,8 +823,8 @@
           "required": true
         },
         "responses": {
-          "400": {
-            "description": "Corps de la requête invalide (login, mot de passe ou rôle manquant/invalide)",
+          "200": {
+            "description": "Inscription réussie, cookie JWT posé",
             "content": {
               "*/*": {
                 "schema": {
@@ -833,8 +833,8 @@
               }
             }
           },
-          "200": {
-            "description": "Inscription réussie, token JWT retourné",
+          "400": {
+            "description": "Corps de la requête invalide (login, mot de passe ou rôle manquant/invalide)",
             "content": {
               "*/*": {
                 "schema": {
@@ -846,7 +846,21 @@
         }
       }
     },
-    "/api/auth/login": {
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "summary": "Déconnexion de l'utilisateur",
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Déconnexion réussie, cookie supprimé"
+          }
+        }
+      }
+    },
+    "/auth/login": {
       "post": {
         "tags": [
           "auth-controller"
@@ -874,8 +888,8 @@
               }
             }
           },
-          "401": {
-            "description": "Email ou mot de passe incorrect",
+          "200": {
+            "description": "Authentification réussie, cookie JWT posé",
             "content": {
               "*/*": {
                 "schema": {
@@ -884,8 +898,8 @@
               }
             }
           },
-          "200": {
-            "description": "Authentification réussie, token JWT retourné",
+          "401": {
+            "description": "Email ou mot de passe incorrect",
             "content": {
               "*/*": {
                 "schema": {
@@ -2064,6 +2078,88 @@
         ]
       }
     },
+    "/documents/{id}/download/{nomFichier}": {
+      "get": {
+        "tags": [
+          "document-controller"
+        ],
+        "summary": "Télécharger un document avec un nom de fichier personnalisé dans l'URL (utile pour le visualiseur PDF Chrome)",
+        "operationId": "downloadWithName",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "nomFichier",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "maxLength": 255,
+              "minLength": 0,
+              "pattern": "[\\w\\-. ]+",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Document introuvable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nom de fichier invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Flux binaire du fichier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/demandeDevis/{id}": {
       "get": {
         "tags": [
@@ -2909,6 +3005,9 @@
           "nomFichierOriginal": {
             "type": "string"
           },
+          "nomTelechargement": {
+            "type": "string"
+          },
           "typeContenu": {
             "type": "string"
           },
@@ -2955,9 +3054,6 @@
       "AuthResponseDTO": {
         "type": "object",
         "properties": {
-          "token": {
-            "type": "string"
-          },
           "userId": {
             "type": "integer",
             "format": "int64"

@@ -83,6 +83,8 @@ export type StatutDocument = 'ORPHELIN' | 'ATTACHE';
 export interface DocumentDTO {
   id?: number;
   nomFichierOriginal?: string;
+  /** Nom lisible à afficher à l'utilisateur et à utiliser pour le téléchargement. */
+  nomTelechargement?: string;
   typeContenu?: string;
   tailleFichier?: number;
   bucketName?: string;
@@ -140,6 +142,12 @@ export interface PropositionDevisDetail {
   devisPdfId?: number;
   bureauEtude?: BureauEtudesDetail;
   demandeDevis?: DemandeDevisDetail;
+}
+
+/** Représente un document nommé lié à une étude, prêt à être affiché. */
+export interface DocumentRef {
+  id: number;
+  label: string;
 }
 
 export interface EtudeDetailDTO {

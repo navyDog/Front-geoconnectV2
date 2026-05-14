@@ -6,156 +6,86 @@ Le backend suit un pattern **upload-en-deux-temps** selon les cas :
 
 | Endpoint | Méthode | Type | Description |
 |---|---|---|---|
-| `POST /documents/upload` | `multipart/form-data` | Part `file` | Upload standalone d'un fichier → retourne un `DocumentDTO` avec son `id` |
-| `GET /documents/{id}/download` | — | — | Téléchargement d'un fichier binaire |
+| `POST /documents/upload` | `multipart/form-data` | Part `file` | Upload standalone → retourne un `DocumentDTO` avec `id` et `nomTelechargement` |
+| `GET /documents/{id}/download` | — | — | Téléchargement binaire, `Content-Disposition` porte le bon nom |
 | `POST /propositionDevis` | `multipart/form-data` | 2 parts | Création proposition + PDF en une seule requête |
 | `PUT /propositionDevis` | `multipart/form-data` | 2 parts | Mise à jour proposition + PDF |
 
 ---
 
-## 📋 Cas 1 — `createDemandeDevis` avec document
+## 📄 Structure du `DocumentDTO`
 
-> ⚠️ Le `DemandeDevisDTO` **n'a pas de champ `documentId`** et le `POST /demandeDevis` attend du **JSON pur** (`@RequestBody`).  
-> La `DemandeDevisEntity` possède bien un champ `docsDevis` mais il n'est pas encore exposé dans le DTO ni dans le controller.
+Tous les endpoints qui retournent un document (upload, listing, etc.) renvoient maintenant
+un champ **`nomTelechargement`** calculé côté backend :
 
-**→ Pour l'instant, il n'est pas possible d'associer un document à une `DemandeDevis` directement via l'API.**
-
-### Ce qu'il faudrait faire côté backend pour l'activer
-
-1. Ajouter un champ `documentId` dans `DemandeDevisDTO`
-2. Modifier le controller pour accepter du `multipart/form-data` (comme `PropositionDevis`)
-3. Adapter le mapper et le service en conséquence
-
-### Flow React en attendant (2 étapes)
-
+```json
+{
+  "id": 12,
+  "nomFichierOriginal": "uuid_rapport.pdf",
+  "nomTelechargement": "DUPONT_JEAN-G1-RAPPORT.pdf",
+  "typeContenu": "application/pdf",
+  "tailleFichier": 204800,
+  "statut": "ATTACHE",
+  "expireAt": null
+}
 ```
-Étape 1 : Upload du fichier
-POST /documents/upload  →  { id: 42, nomFichierOriginal: "plan.pdf", ... }
 
-Étape 2 : Créer la demande (le documentId pourra être passé une fois le backend adapté)
-POST /demandeDevis  →  { delaiMax, adresseProjet, clientId }
-```
+| Champ | Usage |
+|---|---|
+| `nomFichierOriginal` | Clé technique interne — **ne pas afficher à l'utilisateur** |
+| `nomTelechargement` | Nom à afficher dans l'UI et à utiliser lors du téléchargement |
+
+> Le nom suit le pattern `NOM_CLIENT-TYPE_MISSION-TYPE_DOCUMENT.ext`  
+> (ex : `DUPONT_JEAN-G1-RAPPORT.pdf`, `MARTIN_SOPHIE-G2_PRO-DEVIS_SIGNE.pdf`).  
+> Si le document est encore orphelin (pas encore attaché à une étude), le nom original sanitisé est retourné.
 
 ---
 
-## 📋 Cas 2 — `createPropositionDevis` avec PDF (déjà supporté ✅)
+## 📋 Cas 1 — Afficher le nom d'un document **sans** le télécharger
 
-Le backend accepte **un seul appel `multipart/form-data`** avec 2 parts :
-
-- **`proposition`** : le JSON de la proposition, envoyé comme `Blob` avec le type `application/json`
-- **`devisPdf`** : le fichier PDF (optionnel)
-
-### Exemple React / Axios
-
-```js
-const createPropositionDevis = async (propositionData, pdfFile) => {
-  const formData = new FormData();
-
-  // Part "proposition" : JSON sérialisé comme Blob
-  formData.append(
-    "proposition",
-    new Blob([JSON.stringify(propositionData)], { type: "application/json" })
-  );
-
-  // Part "devisPdf" : fichier binaire (optionnel)
-  if (pdfFile) {
-    formData.append("devisPdf", pdfFile); // pdfFile = objet File depuis <input type="file">
-  }
-
-  return axios.post("/propositionDevis", formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      // ⚠️ Ne PAS définir Content-Type manuellement
-      // axios le génère automatiquement avec le bon boundary multipart
-    },
-  });
-};
-```
-
-### Exemple JSX
+Utilise directement `nomTelechargement` depuis le DTO reçu :
 
 ```jsx
-const [pdfFile, setPdfFile] = useState(null);
-
-<input
-  type="file"
-  accept="application/pdf"
-  onChange={(e) => setPdfFile(e.target.files[0])}
-/>
-
-<button
-  onClick={() =>
-    createPropositionDevis(
-      {
-        bureauEtudeId: 1,
-        demandeDevisId: 3,
-        prix: 1500,
-        dateRendu: "2026-07-01",
-      },
-      pdfFile
-    )
-  }
->
-  Soumettre
-</button>
+// Exemple : liste des documents d'une étude
+const DocumentItem = ({ document }) => (
+  <div>
+    <span>{document.nomTelechargement}</span>
+    <button onClick={() => downloadDocument(document.id, document.nomTelechargement)}>
+      Télécharger
+    </button>
+  </div>
+);
 ```
+
+Pas de logique de nommage côté front — le back fait tout.
 
 ---
 
-## 📋 Cas 3 — Upload standalone + association manuelle
-
-C'est le pattern à utiliser pour **tout endpoint qui n'accepte qu'un `documentId`** dans son body JSON (ex : `DemandeDevis` une fois enrichi côté backend).
+## 📋 Cas 2 — Télécharger un document avec le bon nom
 
 ```js
-// Étape 1 : uploader le fichier, récupérer son id
-const uploadDocument = async (file) => {
-  const formData = new FormData();
-  formData.append("file", file); // le paramètre backend s'appelle exactement "file"
-  const res = await axios.post("/documents/upload", formData, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data.id; // ex: 42
-};
-
-// Étape 2 : utiliser l'id retourné dans la vraie requête JSON
-const soumettreDemandeAvecDocument = async (demandeData, file) => {
-  const documentId = await uploadDocument(file);
-
-  return axios.post(
-    "/demandeDevis",
-    {
-      delaiMax: demandeData.delaiMax,
-      adresseProjet: demandeData.adresseProjet,
-      clientId: demandeData.clientId,
-      documentId: documentId, // une fois le backend adapté
-    },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-};
-```
-
----
-
-## 📋 Cas 4 — Télécharger / afficher un document
-
-```js
-const downloadDocument = async (documentId, fileName) => {
+const downloadDocument = async (documentId, nomTelechargement) => {
   const res = await axios.get(`/documents/${documentId}/download`, {
     headers: { Authorization: `Bearer ${token}` },
-    responseType: "blob", // important : réponse binaire
+    responseType: "blob",
   });
 
-  // Déclenche le téléchargement dans le navigateur
+  // Le Content-Disposition du back porte déjà le bon nom,
+  // mais on le passe explicitement pour être sûr.
   const url = URL.createObjectURL(res.data);
   const link = document.createElement("a");
   link.href = url;
-  link.download = fileName || `document-${documentId}`;
+  link.download = nomTelechargement;
   link.click();
   URL.revokeObjectURL(url);
 };
 ```
 
-Pour **afficher** un PDF dans le navigateur au lieu de le télécharger :
+> ✅ `nomTelechargement` provient du `DocumentDTO` déjà en mémoire — aucun appel réseau supplémentaire.
+
+---
+
+## 📋 Cas 3 — Afficher un PDF dans le navigateur (sans téléchargement)
 
 ```js
 const afficherDocument = async (documentId) => {
@@ -170,34 +100,121 @@ const afficherDocument = async (documentId) => {
 
 ---
 
-## 🗺️ Récapitulatif des patterns
+## 📋 Cas 4 — Upload standalone + affichage immédiat du nom
+
+Après un upload, le `DocumentDTO` retourné contient déjà `nomTelechargement`.
+S'il est encore orphelin (pas encore attaché), le backend retourne le nom original sanitisé.
+Le nom structuré sera mis à jour automatiquement dès que le document sera attaché à une étude
+et que le front rechargera le listing.
+
+```js
+const uploadDocument = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await axios.post("/documents/upload", formData, {
+    headers: { Authorization: `Bearer ${token}` },
+    // ⚠️ Ne pas forcer Content-Type : axios le gère avec le bon boundary
+  });
+
+  // res.data est un DocumentDTO avec nomTelechargement déjà renseigné
+  return res.data;
+};
+
+// Exemple d'usage dans un composant
+const handleUpload = async (file) => {
+  const doc = await uploadDocument(file);
+  console.log(doc.nomTelechargement); // ex: "MON_FICHIER_PDF" (orphelin sanitisé)
+  setDocuments((prev) => [...prev, doc]);
+};
+```
+
+---
+
+## 📋 Cas 5 — `createPropositionDevis` avec PDF (déjà supporté ✅)
+
+Le backend accepte **un seul appel `multipart/form-data`** avec 2 parts :
+
+- **`proposition`** : le JSON de la proposition, envoyé comme `Blob` avec le type `application/json`
+- **`devisPdf`** : le fichier PDF (optionnel)
+
+```js
+const createPropositionDevis = async (propositionData, pdfFile) => {
+  const formData = new FormData();
+
+  formData.append(
+    "proposition",
+    new Blob([JSON.stringify(propositionData)], { type: "application/json" })
+  );
+
+  if (pdfFile) {
+    formData.append("devisPdf", pdfFile);
+  }
+
+  return axios.post("/propositionDevis", formData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+```
+
+---
+
+## 📋 Cas 6 — `createDemandeDevis` avec document
+
+> ⚠️ Le `POST /demandeDevis` attend du **JSON pur** (`@RequestBody`).  
+> L'association d'un document se fait en deux étapes.
+
+```js
+const soumettreDemandeAvecDocument = async (demandeData, file) => {
+  // Étape 1 : upload
+  const doc = await uploadDocument(file);
+
+  // Étape 2 : créer la demande avec le documentId
+  return axios.post(
+    "/demandeDevis",
+    { ...demandeData, documentId: doc.id },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};
+```
+
+---
+
+## 🗺️ Récapitulatif
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     PATTERNS FRONT REACT                         │
-├───────────────────────────┬─────────────────────────────────────┤
-│ PropositionDevis          │ multipart/form-data (2 parts)        │
-│ POST /propositionDevis    │  - "proposition" → JSON Blob         │
-│ PUT  /propositionDevis    │  - "devisPdf"    → File (optionnel)  │
-├───────────────────────────┼─────────────────────────────────────┤
-│ Upload standalone         │ POST /documents/upload               │
-│                           │  - "file" → File                     │
-│                           │  → retourne DocumentDTO avec id       │
-├───────────────────────────┼─────────────────────────────────────┤
-│ DemandeDevis              │ JSON pur (pas de doc exposé à ce     │
-│ POST /demandeDevis        │ jour) → upload séparé si backend     │
-│                           │ enrichi avec documentId              │
-├───────────────────────────┼─────────────────────────────────────┤
-│ Téléchargement            │ GET /documents/{id}/download         │
-│                           │  responseType: "blob"                │
-└───────────────────────────┴─────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                       NOMMAGE DES DOCUMENTS                           │
+├──────────────────────────────────────────────────────────────────────┤
+│  Afficher le nom        →  document.nomTelechargement  (champ DTO)   │
+│  Déclencher le DL       →  link.download = nomTelechargement         │
+│  Logique de nommage     →  100% côté back, rien côté front           │
+│  Mise à jour du nom     →  automatique au rechargement du listing     │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────┐
+│                     PATTERNS D'APPELS API                             │
+├───────────────────────────┬──────────────────────────────────────────┤
+│ PropositionDevis          │ multipart/form-data (2 parts)            │
+│ POST /propositionDevis    │  - "proposition" → JSON Blob             │
+│ PUT  /propositionDevis    │  - "devisPdf"    → File (optionnel)      │
+├───────────────────────────┼──────────────────────────────────────────┤
+│ Upload standalone         │ POST /documents/upload                   │
+│                           │  - "file" → File                         │
+│                           │  → retourne DocumentDTO avec             │
+│                           │    nomTelechargement                      │
+├───────────────────────────┼──────────────────────────────────────────┤
+│ Téléchargement            │ GET /documents/{id}/download             │
+│                           │  responseType: "blob"                    │
+│                           │  link.download = doc.nomTelechargement   │
+└───────────────────────────┴──────────────────────────────────────────┘
 ```
 
 ---
 
 ## ⚠️ Points d'attention
 
-- **Ne jamais forcer `Content-Type: multipart/form-data`** dans les headers axios quand tu utilises `FormData` : axios le définit automatiquement avec le bon `boundary`. Le forcer manuellement casse la requête.
+- **Ne jamais forcer `Content-Type: multipart/form-data`** dans les headers axios : axios le définit automatiquement avec le bon `boundary`. Le forcer manuellement casse la requête.
 - **Toujours passer le JWT** dans `Authorization: Bearer <token>` — tous les endpoints sont sécurisés.
-- Pour `createPropositionDevis`, la part JSON **doit être un `Blob`** avec `type: "application/json"`, pas une simple chaîne, sinon Spring ne saura pas la désérialiser en `PropositionDevisDTO`.
-
+- **Ne pas utiliser `nomFichierOriginal`** pour l'affichage — c'est une clé technique interne (UUID + nom brut). Utiliser exclusivement `nomTelechargement`.
+- Pour `createPropositionDevis`, la part JSON **doit être un `Blob`** avec `type: "application/json"`, pas une simple chaîne.

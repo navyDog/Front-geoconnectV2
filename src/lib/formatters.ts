@@ -1,5 +1,36 @@
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { DocumentRef, EtudeDetailDTO } from '../types';
+
+// ...existing code...
+
+/**
+ * Construit la liste des documents disponibles pour une étude donnée,
+ * à partir des IDs présents dans l'EtudeDetailDTO.
+ */
+export function buildEtudeDocuments(etude: EtudeDetailDTO): DocumentRef[] {
+  const docs: DocumentRef[] = [];
+
+  const devisPdfId = etude.propositionDevis?.devisPdfId;
+  if (devisPdfId != null) {
+    docs.push({ id: devisPdfId, label: 'Devis (proposition)' });
+  }
+
+  const docsDevisId = etude.propositionDevis?.demandeDevis?.docsDevisId;
+  if (docsDevisId != null) {
+    docs.push({ id: docsDevisId, label: 'Documents de la demande' });
+  }
+
+  if (etude.devisSigneId != null) {
+    docs.push({ id: etude.devisSigneId, label: 'Devis signé' });
+  }
+
+  if (etude.rapportId != null) {
+    docs.push({ id: etude.rapportId, label: 'Rapport final' });
+  }
+
+  return docs;
+}
 
 /**
  * Formate une date ISO en "dd/MM/yyyy". Retourne '—' si absente ou invalide.
