@@ -27,7 +27,20 @@ export interface BureauEtudesDTO {
   utilisateurId?: number;
 }
 
-export type TypeDemandeDevis = 'G1' | 'G2_AVP' | 'G2_PRO';
+export type TypeDemandeDevis =
+  | 'ASSAINISSEMENT'
+  | 'G0'
+  | 'G1_ES_PGC'
+  | 'G1_ELAN'
+  | 'G2_AVP'
+  | 'G2_PRO'
+  | 'G5';
+
+/** Objet retourné par le référentiel : code technique + libellé lisible. */
+export interface EnumValueDTO {
+  code: string;
+  libelle: string;
+}
 
 export interface DemandeDevisDTO {
   id?: number;

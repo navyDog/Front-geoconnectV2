@@ -21,146 +21,6 @@
     }
   ],
   "paths": {
-    "/propositionDevis": {
-      "get": {
-        "tags": [
-          "proposition-devis-controller"
-        ],
-        "summary": "Get all propositionDevis",
-        "operationId": "getAllPropositionDevis",
-        "responses": {
-          "403": {
-            "description": "Droits insuffisants",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "Liste des propositions de devis (vide si aucune)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Token JWT absent, expiré ou invalide",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PropositionDevisDTO"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      },
-      "put": {
-        "tags": [
-          "proposition-devis-controller"
-        ],
-        "summary": "Update an existing propositionDevis",
-        "operationId": "updatePropositionDevis",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PropositionDevisDTO"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "403": {
-            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
-          },
-          "200": {
-            "description": "Proposition de devis mise à jour avec succès"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Token JWT absent, expiré ou invalide"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "proposition-devis-controller"
-        ],
-        "summary": "Create a new propositionDevis",
-        "operationId": "createPropositionDevis",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PropositionDevisDTO"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "403": {
-            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
-          },
-          "200": {
-            "description": "Proposition de devis créée avec succès"
-          },
-          "400": {
-            "description": "Bad Request"
-          },
-          "401": {
-            "description": "Token JWT absent, expiré ou invalide"
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
     "/demandeDevis": {
       "get": {
         "tags": [
@@ -637,6 +497,110 @@
         ]
       }
     },
+    "/propositionDevis": {
+      "get": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Get all propositionDevis",
+        "operationId": "getAllPropositionDevis",
+        "responses": {
+          "403": {
+            "description": "Droits insuffisants",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Liste des propositions de devis (vide si aucune)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PropositionDevisDTO"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Create a new propositionDevis",
+        "operationId": "createPropositionDevis",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropositionDevisDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+          },
+          "200": {
+            "description": "Proposition de devis créée avec succès"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/etude": {
       "get": {
         "tags": [
@@ -909,6 +873,48 @@
             }
           }
         }
+      }
+    },
+    "/propositionDevis/{id}/refuser": {
+      "patch": {
+        "tags": [
+          "proposition-devis-controller"
+        ],
+        "summary": "Refuser une proposition de devis",
+        "operationId": "refuserPropositionDevis",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proposition refusée avec succès"
+          },
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "400": {
+            "description": "Bad Request - Proposition déjà acceptée ou déjà refusée"
+          },
+          "404": {
+            "description": "Proposition de devis introuvable"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/propositionDevis/{id}/accepter": {
@@ -1268,6 +1274,48 @@
           },
           "200": {
             "description": "Devis signé attaché avec succès"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/referentiel/types-etude": {
+      "get": {
+        "tags": [
+          "referentiel-controller"
+        ],
+        "summary": "Liste des types d'étude disponibles avec leur libellé",
+        "operationId": "getTypesEtude",
+        "responses": {
+          "200": {
+            "description": "Liste des types d'étude",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnumValueDTO"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnumValueDTO"
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2787,46 +2835,6 @@
   },
   "components": {
     "schemas": {
-      "PropositionDevisDTO": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "bureauEtudeId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "demandeDevisId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "delaiMaxIntervention": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "delaiMaxRendu": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "prix": {
-            "type": "number"
-          },
-          "documentId": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "statut": {
-            "type": "string",
-            "enum": [
-              "EN_ATTENTE",
-              "ACCEPTEE",
-              "REFUSEE"
-            ]
-          }
-        }
-      },
       "AdresseDTO": {
         "type": "object",
         "properties": {
@@ -2866,9 +2874,13 @@
           "type": {
             "type": "string",
             "enum": [
-              "G1",
+              "ASSAINISSEMENT",
+              "G0",
+              "G1_ES_PGC",
+              "G1_ELAN",
               "G2_AVP",
-              "G2_PRO"
+              "G2_PRO",
+              "G5"
             ]
           },
           "nombreLot": {
@@ -2949,6 +2961,46 @@
           "utilisateurId": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "PropositionDevisDTO": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bureauEtudeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "demandeDevisId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "delaiMaxIntervention": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "delaiMaxRendu": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "prix": {
+            "type": "number"
+          },
+          "documentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "statut": {
+            "type": "string",
+            "enum": [
+              "EN_ATTENTE",
+              "ACCEPTEE",
+              "REFUSEE"
+            ]
           }
         }
       },
@@ -3122,6 +3174,17 @@
           }
         }
       },
+      "EnumValueDTO": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "libelle": {
+            "type": "string"
+          }
+        }
+      },
       "BureauEtudesDetail": {
         "type": "object",
         "properties": {
@@ -3186,9 +3249,13 @@
           "type": {
             "type": "string",
             "enum": [
-              "G1",
+              "ASSAINISSEMENT",
+              "G0",
+              "G1_ES_PGC",
+              "G1_ELAN",
               "G2_AVP",
-              "G2_PRO"
+              "G2_PRO",
+              "G5"
             ]
           },
           "nombreLot": {
