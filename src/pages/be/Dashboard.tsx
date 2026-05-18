@@ -29,15 +29,49 @@ export default function BEDashboard() {
     );
   }
 
+  // Demandes pour lesquelles une proposition a été acceptée (toutes confondues)
+  const acceptedDemandeIds = new Set<number>();
+  demandes.forEach((d, i) => {
+    if ((allPropositionsPerDemande[i] ?? []).some(p => p.statut === 'ACCEPTEE')) {
+      if (d.id != null) acceptedDemandeIds.add(d.id);
+    }
+  });
+
+  // Pour chaque demandeDevisId, on groupe mes propositions et on retient la "active"
+  // EN_ATTENTE > ACCEPTEE > REFUSEE (dernière en date)
+  const myPropsPerDemande = new Map<number, PropositionDevisDTO[]>();
+  myPropositions.forEach(p => {
+    if (p.demandeDevisId != null) {
+      if (!myPropsPerDemande.has(p.demandeDevisId)) myPropsPerDemande.set(p.demandeDevisId, []);
+      myPropsPerDemande.get(p.demandeDevisId).push(p);
+    }
+  });
+  const myActivePropPerDemande = new Map<number, PropositionDevisDTO>();
+  myPropsPerDemande.forEach((props, demandeId) => {
+    const active =
+      props.find(p => p.statut === 'EN_ATTENTE') ??
+      props.find(p => p.statut === 'ACCEPTEE') ??
+      props.at(-1);
+    if (active) myActivePropPerDemande.set(demandeId, active);
+  });
+
   const myPropDemandeIds = new Set(myPropositions.map(p => p.demandeDevisId));
   const openDemandes = demandes.filter((d, i) => {
     const props = allPropositionsPerDemande[i] ?? [];
     const hasAccepted = props.some(p => p.statut === 'ACCEPTEE');
     return !myPropDemandeIds.has(d.id) && !hasAccepted;
   });
-  const pendingProps = myPropositions.filter(p => p.statut === 'EN_ATTENTE');
 
-  const renderDemandeCard = (demande: DemandeDevisDTO, prop?: PropositionDevisDTO) => (
+  // "En attente" = mes offres EN_ATTENTE + mes offres REFUSÉE reproposables (pas d'acceptée sur la demande)
+  const pendingItems = [...myActivePropPerDemande.entries()].filter(([demandeId, prop]) => {
+    if (prop.statut === 'EN_ATTENTE') return true;
+    if (prop.statut === 'REFUSEE' && !acceptedDemandeIds.has(demandeId)) return true;
+    return false;
+  });
+
+  const renderDemandeCard = (demande: DemandeDevisDTO, prop?: PropositionDevisDTO) => {
+    const isRefused = prop?.statut === 'REFUSEE';
+    return (
     <Card key={demande.id} className={prop ? "border-slate-200" : "border-blue-200"}>
       <CardHeader>
         <div className="flex justify-between items-start">
@@ -57,9 +91,11 @@ export default function BEDashboard() {
       </CardHeader>
       <CardContent className="pt-3">
         {prop && (
-          <div className="bg-blue-50/50 p-2 rounded border border-blue-100 mb-3 text-[11px]">
+          <div className={`p-2 rounded border mb-3 text-[11px] ${isRefused ? 'bg-red-50/50 border-red-100' : 'bg-blue-50/50 border-blue-100'}`}>
             <div className="flex justify-between items-center mb-1">
-              <span className="text-blue-700 font-bold uppercase tracking-wider">Votre proposition</span>
+              <span className={`font-bold uppercase tracking-wider ${isRefused ? 'text-red-600' : 'text-blue-700'}`}>
+                {isRefused ? 'Offre refusée — à reproposer' : 'Votre proposition'}
+              </span>
               <span className="font-bold text-slate-900 text-xs">{prop.prix} €</span>
             </div>
             <div className="text-slate-500">
@@ -73,13 +109,14 @@ export default function BEDashboard() {
       </CardContent>
       <CardFooter>
         <Link to={`/be/demande/${demande.id}`} className="w-full">
-          <Button variant={prop ? "outline" : "primary"} size="sm" className="w-full group">
-            {prop ? "Voir détail" : "Répondre au devis"}
+          <Button variant={prop ? "outline" : "primary"} size="sm" className={`w-full group ${isRefused ? 'border-red-300 text-red-700 hover:bg-red-50' : ''}`}>
+            {isRefused ? 'Reproposer une offre' : prop ? 'Voir détail' : 'Répondre au devis'}
           </Button>
         </Link>
       </CardFooter>
     </Card>
-  );
+    );
+  };
 
   const renderEtudeCard = (etude: EtudeDetailDTO) => {
     const prop = etude.propositionDevis;
@@ -138,13 +175,13 @@ export default function BEDashboard() {
             {Boolean(demande?.superficie) && (
               <div className="p-2 bg-slate-50 rounded border border-slate-100">
                 <p className="text-slate-400 font-bold uppercase tracking-wider">Superficie</p>
-                <p className="font-semibold text-slate-700">{demande!.superficie} m²</p>
+                <p className="font-semibold text-slate-700">{demande.superficie} m²</p>
               </div>
             )}
             {Boolean(demande?.nombreLot) && (
               <div className="p-2 bg-slate-50 rounded border border-slate-100">
                 <p className="text-slate-400 font-bold uppercase tracking-wider">Lots</p>
-                <p className="font-semibold text-slate-700">{demande!.nombreLot}</p>
+                <p className="font-semibold text-slate-700">{demande.nombreLot}</p>
               </div>
             )}
           </div>
@@ -203,7 +240,7 @@ export default function BEDashboard() {
         <nav className="-mb-px flex space-x-6">
           {[
             { id: 'OUVERT',         label: 'Missions Disponibles', count: openDemandes.length },
-            { id: 'EN_ATTENTE',     label: 'En attente',           count: pendingProps.length },
+            { id: 'EN_ATTENTE',     label: 'En attente',           count: pendingItems.length },
             { id: 'ETUDE_EN_COURS', label: 'Études en cours',      count: etudes.length },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
@@ -231,10 +268,10 @@ export default function BEDashboard() {
             : openDemandes.map(d => renderDemandeCard(d))
         )}
         {activeTab === 'EN_ATTENTE' && (
-          pendingProps.length === 0
+          pendingItems.length === 0
             ? <div className="col-span-full py-12 text-center text-slate-500">Aucune proposition en attente.</div>
-            : pendingProps.map(p => {
-                const d = demandes.find(d => d.id === p.demandeDevisId);
+            : pendingItems.map(([demandeId, p]) => {
+                const d = demandes.find(d => d.id === demandeId);
                 return d ? renderDemandeCard(d, p) : null;
               })
         )}

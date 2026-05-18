@@ -8,7 +8,7 @@ import { DemandeDevisDTO, PropositionDevisDTO, BureauEtudesDTO } from '../../typ
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { MapPin, Clock, ChevronLeft, FileCheck, Paperclip } from 'lucide-react';
+import { MapPin, Clock, ChevronLeft, FileCheck, Paperclip, History } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useForm } from 'react-hook-form';
@@ -17,6 +17,135 @@ import { fr } from 'date-fns/locale';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { TYPE_LABELS } from '../../constants/labels';
 
+// ─── Sous-composants ──────────────────────────────────────────────────────────
+
+interface ActivePropositionCardProps {
+  prop: PropositionDevisDTO;
+  statusConfig: Record<string, { border: string; bg: string; text: string; title: string }>;
+}
+
+function ActivePropositionCard({ prop, statusConfig }: Readonly<ActivePropositionCardProps>) {
+  const config = statusConfig[prop.statut as keyof typeof statusConfig] ?? statusConfig.EN_ATTENTE;
+  let statutLabel = 'En attente';
+  if (prop.statut === 'ACCEPTEE') statutLabel = 'Acceptée';
+  else if (prop.statut === 'REFUSEE') statutLabel = 'Refusée';
+  return (
+    <Card className={`${config.border} ${config.bg} shadow-sm h-full`}>
+      <CardHeader className="pb-2 border-b border-current">
+        <CardTitle className={`flex items-center ${config.text} text-sm`}>
+          <FileCheck className="w-4 h-4 mr-2" />
+          {config.title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-4 text-current space-y-4">
+        <div>
+          <span className="block text-[10px] font-bold uppercase mb-1">Montant Estimé</span>
+          <span className="font-bold text-2xl font-mono">
+            {prop.prix} € <span className="text-xs">HT</span>
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-current/10 p-2 rounded">
+            <span className="block text-[10px] font-bold uppercase mb-1">Délai rendu</span>
+            <span className="font-semibold text-xs">
+              {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} j`}
+            </span>
+          </div>
+          <div className="bg-current/10 p-2 rounded">
+            <span className="block text-[10px] font-bold uppercase mb-1">Statut</span>
+            <span className="font-semibold text-xs">{statutLabel}</span>
+          </div>
+        </div>
+        {prop.delaiMaxIntervention != null && (
+          <div className="bg-current/10 p-2 rounded">
+            <span className="block text-[10px] font-bold uppercase mb-1">Délai intervention</span>
+            <span className="font-semibold text-xs">{prop.delaiMaxIntervention} j</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface OfferFormProps {
+  isResubmit: boolean;
+  isSubmitting: boolean;
+  register: ReturnType<typeof import('react-hook-form').useForm>['register'];
+  errors: Record<string, unknown>;
+  pdfFile: File | null;
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  onFileChange: (f: File | null) => void;
+  onSubmitClick: () => void;
+}
+
+function OfferForm({ isResubmit, isSubmitting, register, errors, pdfFile, fileInputRef, onFileChange, onSubmitClick }: Readonly<OfferFormProps>) {
+  return (
+    <Card className="border-slate-200 h-full flex flex-col">
+      <CardHeader className="bg-slate-50/50 pb-3 border-b border-slate-100">
+        <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          {isResubmit ? 'Resoumettre une offre' : 'Formuler une offre'}
+        </CardTitle>
+        <CardDescription className="text-[10px]">Déposez votre estimation pour ce projet</CardDescription>
+      </CardHeader>
+      <form className="flex-1 flex flex-col">
+        <CardContent className="pt-4 space-y-3 flex-1">
+          <Input
+            label="PRIX D'INTERVENTION (€ HT) *"
+            type="number"
+            step="0.01"
+            placeholder="Ex: 4200"
+            {...register('prix', { required: true })}
+            error={(errors as Record<string, { message?: string }>).prix ? 'Requis' : undefined}
+          />
+          <Input
+            label="DÉLAI RENDU (jours) *"
+            type="number"
+            placeholder="Ex: 30"
+            {...register('delaiMaxRendu', { required: true })}
+            error={(errors as Record<string, { message?: string }>).delaiMaxRendu ? 'Requis' : undefined}
+          />
+          <Input
+            label="DÉLAI INTERVENTION (jours, optionnel)"
+            type="number"
+            placeholder="Ex: 14"
+            {...register('delaiMaxIntervention')}
+          />
+          <div>
+            <label htmlFor="pdf-upload" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+              DEVIS PDF (optionnel)
+            </label>
+            <button
+              id="pdf-upload"
+              type="button"
+              className="flex items-center gap-2 w-full border border-dashed border-slate-300 rounded-md px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Paperclip className="w-4 h-4 text-slate-400 flex-shrink-0" />
+              <span className="text-xs text-slate-500 truncate">
+                {pdfFile ? pdfFile.name : 'Joindre un fichier PDF…'}
+              </span>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+            />
+          </div>
+        </CardContent>
+        <CardFooter className="bg-slate-50 border-t border-slate-100 py-3">
+          <Button type="button" isLoading={isSubmitting} className="w-full text-[10px]" onClick={onSubmitClick}>
+            {isResubmit ? 'RESOUMETTRE MON OFFRE' : 'SOUMETTRE MON OFFRE'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
+
+// ─── Page principale ──────────────────────────────────────────────────────────
+
 export default function BERequestDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -24,6 +153,7 @@ export default function BERequestDetail() {
   const navigate = useNavigate();
   const [demande, setDemande] = useState<DemandeDevisDTO | null>(null);
   const [myProposition, setMyProposition] = useState<PropositionDevisDTO | null>(null);
+  const [myRefusedPropositions, setMyRefusedPropositions] = useState<PropositionDevisDTO[]>([]);
   const [allPropositions, setAllPropositions] = useState<PropositionDevisDTO[]>([]);
   const [myBureau, setMyBureau] = useState<BureauEtudesDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,8 +178,11 @@ export default function BERequestDetail() {
         setAllPropositions(propsData || []);
 
         if (bureau?.id) {
-          const mine = (propsData || []).find((p: PropositionDevisDTO) => p.bureauEtudeId === bureau.id);
-          if (mine) setMyProposition(mine);
+          const allMine = (propsData || []).filter((p: PropositionDevisDTO) => p.bureauEtudeId === bureau.id);
+          const refused = allMine.filter(p => p.statut === 'REFUSEE');
+          const active = allMine.find(p => p.statut === 'EN_ATTENTE' || p.statut === 'ACCEPTEE') ?? null;
+          setMyRefusedPropositions(refused);
+          setMyProposition(active);
         }
       } catch (err: any) {
         toastError(err?.response?.data?.message ?? err?.message ?? 'Impossible de charger la demande.');
@@ -107,7 +240,8 @@ export default function BERequestDetail() {
   };
 
   const hasAccepted = allPropositions.some(p => p.statut === 'ACCEPTEE');
-  const canSubmit = !hasAccepted && (!myProposition || myProposition.statut === 'REFUSEE');
+  // Le formulaire est accessible si aucune prop n'est ACCEPTEE et qu'on n'a pas de prop active (EN_ATTENTE)
+  const canSubmit = !hasAccepted && !myProposition;
 
   return (
     <div className="max-w-4xl mx-auto space-y-4">
@@ -193,120 +327,54 @@ export default function BERequestDetail() {
 
         {/* Colonne Latérale: Actions / Proposition */}
         <div className="w-full lg:w-80 space-y-4">
-          {hasAccepted && (!myProposition || myProposition.statut !== 'ACCEPTEE') ? (
+          {/* Historique des offres refusées */}
+          {myRefusedPropositions.length > 0 && (
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader className="pb-2 border-b border-slate-100">
+                <CardTitle className="flex items-center text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                  <History className="w-3.5 h-3.5 mr-1.5" />
+                  Offres précédentes refusées
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-3 space-y-2">
+                {myRefusedPropositions.map((rp, idx) => (
+                  <div key={rp.id ?? idx} className="p-2 bg-red-50 border border-red-100 rounded text-[11px]">
+                    <div className="flex justify-between items-center">
+                      <span className="text-red-600 font-bold">Offre #{idx + 1}</span>
+                      <span className="font-mono font-bold text-slate-700">{rp.prix} €</span>
+                    </div>
+                    <div className="text-slate-500 mt-0.5">
+                      Rendu : {rp.delaiMaxRendu == null ? '—' : `${rp.delaiMaxRendu} j`}
+                      {rp.delaiMaxIntervention != null && ` · Intervention : ${rp.delaiMaxIntervention} j`}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Proposition active ou message ou formulaire */}
+          {hasAccepted && myProposition?.statut !== 'ACCEPTEE' && (
             <Card className="border-yellow-200 bg-yellow-50 shadow-sm">
               <CardContent className="pt-4 text-yellow-800">
                 <p className="text-sm">Une proposition a déjà été acceptée pour cette demande. Vous ne pouvez plus soumettre d'offre.</p>
               </CardContent>
             </Card>
-          ) : myProposition ? (
-            (() => {
-              const config = statusConfig[myProposition.statut as keyof typeof statusConfig] || statusConfig.EN_ATTENTE;
-              return (
-                <Card className={`${config.border} ${config.bg} shadow-sm h-full`}>
-                  <CardHeader className="pb-2 border-b border-current">
-                    <CardTitle className={`flex items-center ${config.text} text-sm`}>
-                      <FileCheck className="w-4 h-4 mr-2" />
-                      {config.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-4 text-current space-y-4">
-                    <div>
-                      <span className="block text-[10px] font-bold uppercase mb-1">Montant Estimé</span>
-                      <span className="font-bold text-2xl font-mono">
-                        {myProposition.prix} € <span className="text-xs">HT</span>
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-current/10 p-2 rounded">
-                        <span className="block text-[10px] font-bold uppercase mb-1">Délai rendu</span>
-                        <span className="font-semibold text-xs">
-                          {myProposition.delaiMaxRendu == null ? '—' : `${myProposition.delaiMaxRendu} j`}
-                        </span>
-                      </div>
-                      <div className="bg-current/10 p-2 rounded">
-                        <span className="block text-[10px] font-bold uppercase mb-1">Statut</span>
-                        <span className="font-semibold text-xs">
-                          {myProposition.statut === 'REFUSEE'
-                            ? 'Refusée'
-                            : myProposition.statut === 'ACCEPTEE'
-                            ? 'Acceptée'
-                            : 'En attente'}
-                        </span>
-                      </div>
-                    </div>
-                    {myProposition.delaiMaxIntervention != null && (
-                      <div className="bg-current/10 p-2 rounded">
-                        <span className="block text-[10px] font-bold uppercase mb-1">Délai intervention</span>
-                        <span className="font-semibold text-xs">{myProposition.delaiMaxIntervention} j</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              );
-            })()
-          ) : (
-            <Card className="border-slate-200 h-full flex flex-col">
-              <CardHeader className="bg-slate-50/50 pb-3 border-b border-slate-100">
-                <CardTitle className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  {myProposition?.statut === 'REFUSEE' ? 'Resoumettre une offre' : 'Formuler une offre'}
-                </CardTitle>
-                <CardDescription className="text-[10px]">Déposez votre estimation pour ce projet</CardDescription>
-              </CardHeader>
-              <form className="flex-1 flex flex-col">
-                <CardContent className="pt-4 space-y-3 flex-1">
-                  <Input
-                    label="PRIX D'INTERVENTION (€ HT) *"
-                    type="number"
-                    step="0.01"
-                    placeholder="Ex: 4200"
-                    {...register('prix', { required: true })}
-                    error={errors.prix ? 'Requis' : undefined}
-                  />
-                  <Input
-                    label="DÉLAI RENDU (jours) *"
-                    type="number"
-                    placeholder="Ex: 30"
-                    {...register('delaiMaxRendu', { required: true })}
-                    error={errors.delaiMaxRendu ? 'Requis' : undefined}
-                  />
-                  <Input
-                    label="DÉLAI INTERVENTION (jours, optionnel)"
-                    type="number"
-                    placeholder="Ex: 14"
-                    {...register('delaiMaxIntervention')}
-                  />
-
-                  {/* Upload PDF optionnel */}
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                      DEVIS PDF (optionnel)
-                    </label>
-                    <div
-                      className="flex items-center gap-2 border border-dashed border-slate-300 rounded-md px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Paperclip className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                      <span className="text-xs text-slate-500 truncate">
-                        {pdfFile ? pdfFile.name : 'Joindre un fichier PDF…'}
-                      </span>
-                    </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="application/pdf"
-                      className="hidden"
-                      onChange={(e) => setPdfFile(e.target.files?.[0] ?? null)}
-                    />
-                  </div>
-                </CardContent>
-                <CardFooter className="bg-slate-50 border-t border-slate-100 py-3">
-                  <Button type="button" isLoading={isSubmitting} className="w-full text-[10px]" onClick={() => setShowConfirmModal(true)}>
-                    {myProposition?.statut === 'REFUSEE' ? 'RESOUMETTRE MON OFFRE' : 'SOUMETTRE MON OFFRE'}
-                  </Button>
-                </CardFooter>
-              </form>
-            </Card>
+          )}
+          {myProposition && (
+            <ActivePropositionCard prop={myProposition} statusConfig={statusConfig} />
+          )}
+          {canSubmit && (
+            <OfferForm
+              isResubmit={myRefusedPropositions.length > 0}
+              isSubmitting={isSubmitting}
+              register={register}
+              errors={errors}
+              pdfFile={pdfFile}
+              fileInputRef={fileInputRef}
+              onFileChange={setPdfFile}
+              onSubmitClick={() => setShowConfirmModal(true)}
+            />
           )}
         </div>
       </div>

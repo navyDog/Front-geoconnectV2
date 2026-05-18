@@ -18,6 +18,7 @@ export default function ClientRequestDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<number | null>(null);
   const [confirmAcceptId, setConfirmAcceptId] = useState<number | null>(null);
+  const [confirmRefuseId, setConfirmRefuseId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -186,7 +187,7 @@ export default function ClientRequestDetail() {
                                 <div className="flex justify-center gap-2">
                                   <Button
                                       size="sm"
-                                      onClick={() => setConfirmAcceptId(prop.id!)}
+                                      onClick={() => setConfirmAcceptId(prop.id)}
                                       isLoading={isProcessing === prop.id}
                                   >
                                     Accepter
@@ -194,7 +195,7 @@ export default function ClientRequestDetail() {
                                   <Button
                                       size="sm"
                                       variant="destructive"
-                                      onClick={() => handleRefuse(prop.id!)}
+                                      onClick={() => setConfirmRefuseId(prop.id)}
                                       isLoading={isProcessing === prop.id}
                                   >
                                     Refuser
@@ -225,6 +226,22 @@ export default function ClientRequestDetail() {
             await handleAccept(id);
           }}
           onCancel={() => setConfirmAcceptId(null)}
+        />
+      )}
+
+      {confirmRefuseId !== null && (
+        <ConfirmModal
+          title="Refuser cette proposition ?"
+          message="Êtes-vous sûr de vouloir refuser cette offre ? Cette action est irréversible."
+          confirmLabel="Refuser l'offre"
+          cancelLabel="Annuler"
+          isLoading={isProcessing === confirmRefuseId}
+          onConfirm={async () => {
+            const id = confirmRefuseId;
+            setConfirmRefuseId(null);
+            await handleRefuse(id);
+          }}
+          onCancel={() => setConfirmRefuseId(null)}
         />
       )}
     </div>

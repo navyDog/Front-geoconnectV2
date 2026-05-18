@@ -6,11 +6,6 @@ export const createPropositionDevis = async (proposition: PropositionDevisDTO) =
   return data;
 };
 
-export const updatePropositionDevis = async (proposition: PropositionDevisDTO) => {
-  const { data } = await api.put('/propositionDevis', proposition);
-  return data;
-};
-
 export const getAllPropositionDevis = async (): Promise<PropositionDevisDTO[]> => {
   const { data } = await api.get('/propositionDevis');
   return data;
