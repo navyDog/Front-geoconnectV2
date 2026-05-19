@@ -3,8 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { getClientByUserId } from '../api/client';
 import { getDemandeDevisByClientId } from '../api/demandeDevis';
 import { getPropositionDevisByDemandeId } from '../api/propositionDevis';
-import { getEtudesByClientId, getEtudeDetailById } from '../api/etude';
+import { getEtudesByClientId, fetchEtudeDetails } from '../api/etude';
 import { ClientDTO, DemandeDevisDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../types';
+import { extractErrorMessage } from '../lib/utils';
 
 export type DemandeWithPropositions = DemandeDevisDTO & { propositions: PropositionDevisDTO[] };
 
@@ -54,7 +55,7 @@ export function useClientDashboardData(): ClientDashboardData {
           Promise.all(
             rawDemandes.map(async (d): Promise<DemandeWithPropositions> => {
               try {
-                const props = await getPropositionDevisByDemandeId(d.id!);
+                const props = await getPropositionDevisByDemandeId(d.id);
                 return { ...d, propositions: props || [] };
               } catch {
                 return { ...d, propositions: [] };
@@ -67,18 +68,12 @@ export function useClientDashboardData(): ClientDashboardData {
         if (cancelled) return;
         setDemandes(enrichedDemandes);
 
-        const details = await Promise.all(
-          rawEtudes.map(e =>
-            e.id
-              ? getEtudeDetailById(e.id).catch(() => ({ ...e } as EtudeDetailDTO))
-              : Promise.resolve({ ...e } as EtudeDetailDTO)
-          )
-        );
+        const details = await fetchEtudeDetails(rawEtudes);
 
         if (!cancelled) setEtudes(details);
       } catch (err: any) {
         if (!cancelled) {
-          setError(err?.response?.data?.message ?? err?.message ?? 'Erreur lors du chargement des données.');
+          setError(extractErrorMessage(err));
         }
       } finally {
         if (!cancelled) setIsLoading(false);

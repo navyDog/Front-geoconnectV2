@@ -71,3 +71,18 @@ export const getEtudeDetailById = async (id: number): Promise<EtudeDetailDTO> =>
   const { data } = await api.get(`/etude/${id}/detail`);
   return data;
 };
+
+/**
+ * Enrichit une liste d'études légères (EtudeDTO) avec leur détail complet.
+ * En cas d'échec pour une étude, retourne le DTO brut comme fallback.
+ */
+export async function fetchEtudeDetails(rawEtudes: EtudeDTO[]): Promise<EtudeDetailDTO[]> {
+  return Promise.all(
+    rawEtudes.map(e =>
+      e.id
+        ? getEtudeDetailById(e.id).catch(() => ({ ...e } as EtudeDetailDTO))
+        : Promise.resolve({ ...e } as EtudeDetailDTO)
+    )
+  );
+}
+
