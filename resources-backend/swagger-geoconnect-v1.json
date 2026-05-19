@@ -2887,8 +2887,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "referenceCadastrale": {
-            "type": "string"
+          "referencesCadastrales": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "superficie": {
             "type": "integer",
@@ -3262,8 +3265,11 @@
             "type": "integer",
             "format": "int64"
           },
-          "referenceCadastrale": {
-            "type": "string"
+          "referencesCadastrales": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "superficie": {
             "type": "integer",

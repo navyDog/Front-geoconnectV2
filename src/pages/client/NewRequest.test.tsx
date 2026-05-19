@@ -202,6 +202,93 @@ describe('NewRequest — soumission du formulaire', () => {
     });
   });
 
+  it('envoie referencesCadastrales comme tableau vide si aucune référence saisie', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).toHaveBeenCalledWith(
+        expect.objectContaining({ referencesCadastrales: [] })
+      );
+    });
+  });
+
+  it('envoie une seule référence cadastrale saisie dans le tableau', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : AB 0042'), 'AB 0042');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).toHaveBeenCalledWith(
+        expect.objectContaining({ referencesCadastrales: ['AB 0042'] })
+      );
+    });
+  });
+
+  it('envoie plusieurs références cadastrales après ajout dynamique', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    // Saisir la première référence
+    const [firstInput] = screen.getAllByPlaceholderText('Ex : AB 0042');
+    await user.type(firstInput, 'AB 0042');
+
+    // Ajouter une deuxième référence
+    await user.click(screen.getByRole('button', { name: /ajouter une référence/i }));
+
+    const inputs = screen.getAllByPlaceholderText('Ex : AB 0042');
+    expect(inputs).toHaveLength(2);
+    await user.type(inputs[1], 'CD 0099');
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).toHaveBeenCalledWith(
+        expect.objectContaining({ referencesCadastrales: ['AB 0042', 'CD 0099'] })
+      );
+    });
+  });
+
+  it('ne pas envoyer referenceCadastrale (ancien champ singulier)', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      const payload = (demandeDevisApi.createDemandeDevis as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(payload).not.toHaveProperty('referenceCadastrale');
+    });
+  });
+
   it('upload le document joint avant de créer la demande', async () => {
     const user = userEvent.setup();
     (documentApi.uploadDocument as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 99 });
@@ -233,3 +320,94 @@ describe('NewRequest — soumission du formulaire', () => {
 
 
 
+describe('NewRequest — références cadastrales dynamiques', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (referentielApi.getTypesEtude as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TYPES);
+    (clientApi.getClientByUserId as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_CLIENT);
+    (demandeDevisApi.createDemandeDevis as ReturnType<typeof vi.fn>).mockResolvedValue({});
+  });
+
+  it('affiche un input de référence cadastrale par défaut', async () => {
+    renderNewRequest();
+
+    const inputs = screen.getAllByPlaceholderText('Ex : AB 0042');
+    expect(inputs).toHaveLength(1);
+  });
+
+  it('n\'affiche pas le bouton supprimer quand il n\'y a qu\'un seul input', async () => {
+    renderNewRequest();
+
+    expect(screen.queryByTitle('Supprimer')).toBeNull();
+  });
+
+  it('ajoute un nouvel input au clic sur "Ajouter une référence"', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await user.click(screen.getByRole('button', { name: /ajouter une référence/i }));
+
+    const inputs = screen.getAllByPlaceholderText('Ex : AB 0042');
+    expect(inputs).toHaveLength(2);
+  });
+
+  it('affiche le bouton supprimer quand il y a plusieurs inputs', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await user.click(screen.getByRole('button', { name: /ajouter une référence/i }));
+
+    const deleteButtons = screen.getAllByTitle('Supprimer');
+    expect(deleteButtons).toHaveLength(2);
+  });
+
+  it('supprime un input au clic sur le bouton supprimer', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    // Ajouter une deuxième référence
+    await user.click(screen.getByRole('button', { name: /ajouter une référence/i }));
+    expect(screen.getAllByPlaceholderText('Ex : AB 0042')).toHaveLength(2);
+
+    // Supprimer la première
+    const [firstDelete] = screen.getAllByTitle('Supprimer');
+    await user.click(firstDelete);
+
+    expect(screen.getAllByPlaceholderText('Ex : AB 0042')).toHaveLength(1);
+  });
+
+  it('masque le bouton supprimer quand il ne reste plus qu\'un input', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await user.click(screen.getByRole('button', { name: /ajouter une référence/i }));
+    const [firstDelete] = screen.getAllByTitle('Supprimer');
+    await user.click(firstDelete);
+
+    expect(screen.queryByTitle('Supprimer')).toBeNull();
+  });
+
+  it('filtre les références vides avant la soumission', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    // Ajouter une deuxième référence mais ne rien saisir dedans
+    await user.click(screen.getByRole('button', { name: /ajouter une référence/i }));
+
+    const [firstInput] = screen.getAllByPlaceholderText('Ex : AB 0042');
+    await user.type(firstInput, 'AB 0042');
+
+    // Remplir les champs requis et soumettre
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).toHaveBeenCalledWith(
+        expect.objectContaining({ referencesCadastrales: ['AB 0042'] })
+      );
+    });
+  });
+});

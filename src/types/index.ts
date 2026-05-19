@@ -49,7 +49,9 @@ export interface DemandeDevisDTO {
   clientId?: number;
   type?: TypeDemandeDevis;
   nombreLot?: number;
+  /** @deprecated Utiliser referencesCadastrales */
   referenceCadastrale?: string;
+  referencesCadastrales?: string[];
   superficie?: number;
   description?: string;
   docsDevisId?: number;
@@ -138,7 +140,9 @@ export interface DemandeDevisDetail {
   delaiMax?: string;
   type?: TypeDemandeDevis;
   nombreLot?: number;
+  /** @deprecated Utiliser referencesCadastrales */
   referenceCadastrale?: string;
+  referencesCadastrales?: string[];
   superficie?: number;
   description?: string;
   docsDevisId?: number;
