@@ -8,14 +8,26 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '../../components/ui/Button';
 import { Calendar, ChevronRight, FlaskConical, User, Clock, AlertCircle } from 'lucide-react';
 import { beMustAct } from '../../components/etude/EtudeStatusBadge';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 type TabType = 'OUVERT' | 'EN_ATTENTE' | 'ETUDE_EN_COURS';
 
 export default function BEDashboard() {
   const { toastError } = useToast();
   const { demandes, allPropositionsPerDemande, myPropositions, etudes, isLoading, error } = useBEDashboardData();
-  const [activeTab, setActiveTab] = useState<TabType>('OUVERT');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabType | null;
+  const [activeTab, setActiveTab] = useState<TabType>(tabParam ?? 'OUVERT');
+
+  // Synchronise l'onglet si le param URL change (ex : retour arrière)
+  useEffect(() => {
+    if (tabParam) setActiveTab(tabParam);
+  }, [tabParam]);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
 
   useEffect(() => {
     if (error) toastError(error);
@@ -247,7 +259,7 @@ export default function BEDashboard() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
+                onClick={() => handleTabChange(tab.id as TabType)}
                 className={`whitespace-nowrap py-3 px-1 border-b-2 text-xs font-bold uppercase tracking-wider flex items-center
                   ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'}`}
               >

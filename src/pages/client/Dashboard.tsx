@@ -6,22 +6,38 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '../../components/ui/Button';
 import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical, Building2, AlertCircle } from 'lucide-react';
 import { clientMustAct } from '../../components/etude/EtudeStatusBadge';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 type TabType = 'DEMANDES' | 'ETUDES';
 
 export default function ClientDashboard() {
   const { toastError } = useToast();
   const { demandes, etudes, isLoading, error } = useClientDashboardData();
-  const [activeTab, setActiveTab] = useState<TabType>('DEMANDES');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabType | null;
+  const [activeTab, setActiveTab] = useState<TabType>(tabParam ?? 'DEMANDES');
+
+  // Synchronise l'onglet si le param URL change (ex : retour arrière)
+  useEffect(() => {
+    if (tabParam) setActiveTab(tabParam);
+  }, [tabParam]);
 
   useEffect(() => {
     if (error) toastError(error);
   }, [error, toastError]);
 
+  // Si aucun onglet dans l'URL et des études existent → afficher ETUDES par défaut
   useEffect(() => {
-    if (!isLoading && etudes.length > 0) setActiveTab('ETUDES');
-  }, [isLoading, etudes.length]);
+    if (!isLoading && etudes.length > 0 && !tabParam) {
+      setActiveTab('ETUDES');
+      setSearchParams({ tab: 'ETUDES' }, { replace: true });
+    }
+  }, [isLoading, etudes.length, tabParam]);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    setSearchParams({ tab }, { replace: true });
+  };
 
   if (isLoading) {
     return (
@@ -84,9 +100,9 @@ export default function ClientDashboard() {
           ].filter(tab => !tab.hidden).map((tab) => {
             const isActive = activeTab === tab.id;
             return (
-              <button
+                <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as TabType)}
+                onClick={() => handleTabChange(tab.id as TabType)}
                 className={`whitespace-nowrap py-3 px-1 border-b-2 text-xs font-bold uppercase tracking-wider flex items-center
                   ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'}`}
               >

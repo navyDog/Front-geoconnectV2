@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
 import { getPropositionDevisByDemandeId, accepterPropositionDevis, refuserPropositionDevis } from '../../api/propositionDevis';
 import { DemandeDevisDTO, PropositionDevisDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { BackButton } from '../../components/ui/BackButton';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
-import { MapPin, Clock, ChevronLeft, Building2, CheckCircle2, FileText } from 'lucide-react';
+import { MapPin, Clock, Building2, CheckCircle2, FileText } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function ClientRequestDetail() {
@@ -84,10 +85,7 @@ export default function ClientRequestDetail() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <Link to="/client/dashboard" className="inline-flex items-center text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider">
-        <ChevronLeft className="w-3 h-3 mr-1" />
-        Retour aux demandes
-      </Link>
+      <BackButton to="/client/dashboard?tab=DEMANDES" label="Retour aux demandes" />
 
       <div className="flex flex-col md:flex-row gap-4">
         

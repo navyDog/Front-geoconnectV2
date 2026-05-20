@@ -78,7 +78,7 @@ export default function BEEtudeDetail() {
     <EtudeDetailLayout
       etude={etude}
       error={error}
-      backTo="/be/dashboard"
+      backTo="/be/dashboard?tab=ETUDE_EN_COURS"
       headerLabel="Gestion d'étude"
       actionBanner={actionBanner}
       infoCard={infoCard}

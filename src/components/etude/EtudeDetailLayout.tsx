@@ -1,12 +1,12 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { EtudeDetailDTO } from '../../types';
 import { buildEtudeDocuments, formatDateLong } from '../../lib/formatters';
 import { DocumentList } from './DocumentList';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { BackButton } from '../ui/BackButton';
 import { EtudeStatusBadge } from './EtudeStatusBadge';
 import { EtudeStepper } from './EtudeStepper';
-import { ChevronLeft, MapPin, FileText, XCircle, Clock } from 'lucide-react';
+import { MapPin, FileText, XCircle, Clock } from 'lucide-react';
 import { TYPE_LABELS } from '../../constants/labels';
 
 interface EtudeDetailLayoutProps {
@@ -47,13 +47,7 @@ export function EtudeDetailLayout({
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <Link
-        to={backTo}
-        className="inline-flex items-center text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider"
-      >
-        <ChevronLeft className="w-3 h-3 mr-1" />
-        Retour au tableau de bord
-      </Link>
+      <BackButton to={backTo} label="Retour au tableau de bord" />
 
       {/* En-tête */}
       <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

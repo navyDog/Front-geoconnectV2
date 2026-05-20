@@ -58,7 +58,7 @@ export default function ClientEtudeDetail() {
     <EtudeDetailLayout
       etude={etude}
       error={error}
-      backTo="/client/dashboard"
+      backTo="/client/dashboard?tab=ETUDES"
       headerLabel="Suivi d'étude"
       actionBanner={actionBanner}
       infoCard={infoCard}

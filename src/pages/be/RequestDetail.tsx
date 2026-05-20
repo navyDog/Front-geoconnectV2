@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
 import { getPropositionDevisByDemandeId, createPropositionDevis } from '../../api/propositionDevis';
 import { getBureauByUserId } from '../../api/bureauEtude';
@@ -7,8 +7,9 @@ import { uploadDocument } from '../../api/document';
 import { DemandeDevisDTO, PropositionDevisDTO, BureauEtudesDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { BackButton } from '../../components/ui/BackButton';
 import { Input } from '../../components/ui/Input';
-import { MapPin, Clock, ChevronLeft, FileCheck, Paperclip, History } from 'lucide-react';
+import { MapPin, Clock, FileCheck, Paperclip, History } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useForm } from 'react-hook-form';
@@ -241,15 +242,15 @@ export default function BERequestDetail() {
   // Le formulaire est accessible si aucune prop n'est ACCEPTEE et qu'on n'a pas de prop active (EN_ATTENTE)
   const canSubmit = !hasAccepted && !myProposition;
 
+  // Onglet de retour : EN_ATTENTE si on a déjà soumis/resoumis, OUVERT sinon
+  const backFallback =
+    myProposition != null || myRefusedPropositions.length > 0
+      ? '/be/dashboard?tab=EN_ATTENTE'
+      : '/be/dashboard?tab=OUVERT';
+
   return (
     <div className="max-w-4xl mx-auto space-y-4">
-      <Link
-        to="/be/dashboard"
-        className="inline-flex items-center text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider"
-      >
-        <ChevronLeft className="w-3 h-3 mr-1" />
-        Retour aux missions
-      </Link>
+      <BackButton to={backFallback} label="Retour aux missions" />
 
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Colonne Principale */}
