@@ -18,12 +18,13 @@ vi.mock('../api/propositionDevis', () => ({
 vi.mock('../api/etude', () => ({
   getEtudesByBureauId: vi.fn(),
   getEtudeDetailById: vi.fn(),
+  fetchEtudeDetails: vi.fn(),
 }));
 
 import { getBureauByUserId } from '../api/bureauEtude';
 import { getAllDemandeDevis } from '../api/demandeDevis';
 import { getPropositionDevisByBureauId, getPropositionDevisByDemandeId } from '../api/propositionDevis';
-import { getEtudesByBureauId, getEtudeDetailById } from '../api/etude';
+import { getEtudesByBureauId, fetchEtudeDetails } from '../api/etude';
 
 const fakeBureau = { id: 10, raisonSociale: 'Bureau Test' };
 const fakeDemande = { id: 1, description: 'Demande 1' };
@@ -68,7 +69,7 @@ describe('useBEDashboardData', () => {
     (getPropositionDevisByBureauId as any).mockResolvedValue([fakeProposition]);
     (getPropositionDevisByDemandeId as any).mockResolvedValue([fakeProposition]);
     (getEtudesByBureauId as any).mockResolvedValue([fakeEtude]);
-    (getEtudeDetailById as any).mockResolvedValue(fakeEtude);
+    (fetchEtudeDetails as any).mockResolvedValue([fakeEtude]);
 
     const { result } = renderHook(() => useBEDashboardData());
 
@@ -101,6 +102,7 @@ describe('useBEDashboardData', () => {
     (getPropositionDevisByBureauId as any).mockRejectedValue(new Error('KO'));
     (getPropositionDevisByDemandeId as any).mockRejectedValue(new Error('KO'));
     (getEtudesByBureauId as any).mockRejectedValue(new Error('KO'));
+    (fetchEtudeDetails as any).mockResolvedValue([]);
 
     const { result } = renderHook(() => useBEDashboardData());
 
@@ -118,6 +120,7 @@ describe('useBEDashboardData', () => {
     (getPropositionDevisByBureauId as any).mockResolvedValue([]);
     (getPropositionDevisByDemandeId as any).mockResolvedValue([]);
     (getEtudesByBureauId as any).mockResolvedValue([]);
+    (fetchEtudeDetails as any).mockResolvedValue([]);
 
     const { result, rerender } = renderHook(() => useBEDashboardData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));

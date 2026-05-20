@@ -177,3 +177,25 @@ export interface EtudeDetailDTO {
   rapportId?: number;
   propositionDevis?: PropositionDevisDetail;
 }
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | 'NOUVELLE_DEMANDE_DEVIS'
+  | 'PROPOSITION_ACCEPTEE'
+  | 'DATE_INTERVENTION_VALIDEE'
+  | 'DATE_INTERVENTION_REFUSEE'
+  | 'PAIEMENT_CONFIRME'
+  | 'NOUVELLE_PROPOSITION_DEVIS'
+  | 'DATE_INTERVENTION_PROPOSEE'
+  | 'RAPPORT_DISPONIBLE';
+
+export interface NotificationDTO {
+  id: number;
+  type: NotificationType;
+  message: string;
+  lienAction?: string;
+  lue: boolean;
+  createdAt: string;
+}
+
