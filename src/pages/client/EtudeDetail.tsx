@@ -63,7 +63,6 @@ export default function ClientEtudeDetail() {
       actionBanner={actionBanner}
       infoCard={infoCard}
       etatRole="CLIENT"
-      rapportLabel="Télécharger le rapport"
       renderActions={() => (
         <ClientStepActions
           etat={etat}

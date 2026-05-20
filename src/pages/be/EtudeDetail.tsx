@@ -83,7 +83,6 @@ export default function BEEtudeDetail() {
       actionBanner={actionBanner}
       infoCard={infoCard}
       etatRole="BE"
-      rapportLabel="Voir le rapport"
       renderActions={() => (
         <BEStepActions
           etat={etat}

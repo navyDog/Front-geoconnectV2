@@ -1,14 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { EtudeDetailDTO, EtatEtude } from '../../types';
+import { EtudeDetailDTO } from '../../types';
 import { buildEtudeDocuments, formatDateLong } from '../../lib/formatters';
 import { DocumentList } from './DocumentList';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { EtudeStatusBadge } from './EtudeStatusBadge';
 import { EtudeStepper } from './EtudeStepper';
-import { ChevronLeft, MapPin, FileText, XCircle, Download, Clock } from 'lucide-react';
+import { ChevronLeft, MapPin, FileText, XCircle, Clock } from 'lucide-react';
 import { TYPE_LABELS } from '../../constants/labels';
-import { openDocument } from '../../api/document';
 
 interface EtudeDetailLayoutProps {
   etude: EtudeDetailDTO;
@@ -23,8 +22,6 @@ interface EtudeDetailLayoutProps {
   infoCard: React.ReactNode;
   /** Rôle transmis au stepper */
   etatRole: 'CLIENT' | 'BE';
-  /** Libellé du bouton rapport (défaut : "Télécharger le rapport") */
-  rapportLabel?: string;
   /** Fabrique les boutons d'action contextuels dans le stepper */
   renderActions: () => React.ReactNode;
 }
@@ -42,7 +39,6 @@ export function EtudeDetailLayout({
   actionBanner,
   infoCard,
   etatRole,
-  rapportLabel = 'Télécharger le rapport',
   renderActions,
 }: EtudeDetailLayoutProps) {
   const prop    = etude.propositionDevis;
@@ -114,15 +110,7 @@ export function EtudeDetailLayout({
                 <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Rendu</span>
                 <span className="font-semibold text-slate-800">{formatDateLong(etude.dateRendu) ?? '—'}</span>
               </div>
-              {etude.rapportId != null && (
-                <button
-                  onClick={() => openDocument(etude.rapportId)}
-                  className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-semibold text-[11px] transition-colors mt-1"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  {rapportLabel}
-                </button>
-              )}
+
             </CardContent>
           </Card>
 
