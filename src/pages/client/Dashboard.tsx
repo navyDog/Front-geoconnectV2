@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../contexts/ToastContext';
 import { useClientDashboardData } from '../../hooks/useClientDashboardData';
 import { ETAT_LABELS, STATUT_LABELS, TYPE_LABELS } from '../../constants/labels';
-import { formatDateShort } from '../../lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical, Building2, AlertCircle } from 'lucide-react';
 import { clientMustAct } from '../../components/etude/EtudeStatusBadge';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
 
 type TabType = 'DEMANDES' | 'ETUDES';
 
@@ -145,7 +143,7 @@ export default function ClientDashboard() {
                     </p>
                     <div className="flex items-center text-xs text-slate-500 mb-2">
                       <Clock className="w-3 h-3 mr-1.5" />
-                      Délai max: {demande.delaiMax ? format(new Date(demande.delaiMax), 'dd/MM/yyyy') : 'Non précisé'}
+                      Délai max: {demande.delaiMaxSouhaite ? `${demande.delaiMaxSouhaite} sem` : 'Non précisé'}
                     </div>
                     <div className="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100 mt-3">
                       <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Propositions reçues</span>
@@ -228,7 +226,7 @@ export default function ClientDashboard() {
                       </div>
                       <div className="p-2 bg-slate-50 rounded border border-slate-100">
                         <p className="text-slate-400 font-bold uppercase tracking-wider">Délai souhaité</p>
-                        <p className="text-slate-700 font-semibold">{formatDateShort(demande?.delaiMax)}</p>
+                        <p className="text-slate-700 font-semibold">{demande?.delaiMaxSouhaite == null ? '—' : `${demande.delaiMaxSouhaite} sem`}</p>
                       </div>
                     </div>
 
@@ -236,10 +234,10 @@ export default function ClientDashboard() {
                     <div className="p-2 bg-blue-50/60 rounded border border-blue-100 text-[11px]">
                       <p className="text-blue-700 font-bold uppercase tracking-wider mb-1">Offre retenue</p>
                       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-700">
-                        <p>Montant : <span className="font-semibold">{prop?.prix != null ? `${prop.prix} €` : '—'}</span></p>
+                        <p>Montant : <span className="font-semibold">{prop?.prix == null ? '—' : `${prop.prix} €`}</span></p>
                         <p>Statut : <span className="font-semibold">{prop?.statut ? (STATUT_LABELS[prop.statut] ?? prop.statut) : '—'}</span></p>
-                        <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu != null ? `${prop.delaiMaxRendu} j` : '—'}</span></p>
-                        <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention != null ? `${prop.delaiMaxIntervention} j` : '—'}</span></p>
+                        <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} sem`}</span></p>
+                        <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention == null ? '—' : `${prop.delaiMaxIntervention} sem`}</span></p>
                       </div>
                     </div>
                   </CardContent>

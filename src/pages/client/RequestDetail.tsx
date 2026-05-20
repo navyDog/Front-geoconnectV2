@@ -8,7 +8,6 @@ import { Button } from '../../components/ui/Button';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { MapPin, Clock, ChevronLeft, Building2, CheckCircle2, FileText } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
-import { format } from 'date-fns';
 
 export default function ClientRequestDetail() {
   const { id } = useParams<{ id: string }>();
@@ -115,11 +114,11 @@ export default function ClientRequestDetail() {
                     {demande.type || 'Standard'}
                   </span>
                 </div>
-                {demande.delaiMax && (
+                {demande.delaiMaxSouhaite && (
                   <div>
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Délai Max</span>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Délai Max Souhaité</span>
                     <span className="font-semibold text-slate-800">
-                      {format(new Date(demande.delaiMax), 'dd/MM/yyyy')}
+                      {demande.delaiMaxSouhaite} sem
                     </span>
                   </div>
                 )}
@@ -174,7 +173,7 @@ export default function ClientRequestDetail() {
                             {prop.prix} €
                           </td>
                           <td className="px-4 py-3 text-slate-600">
-                            {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} j`}
+                            {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} sem`}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {isAccepted ? (

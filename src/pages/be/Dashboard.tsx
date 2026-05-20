@@ -99,7 +99,7 @@ export default function BEDashboard() {
               <span className="font-bold text-slate-900 text-xs">{prop.prix} €</span>
             </div>
             <div className="text-slate-500">
-              Rendu: {prop.delaiMaxRendu == null ? 'N/A' : `${prop.delaiMaxRendu} j`}
+              Rendu: {prop.delaiMaxRendu == null ? 'N/A' : `${prop.delaiMaxRendu} sem`}
             </div>
           </div>
         )}
@@ -170,7 +170,7 @@ export default function BEDashboard() {
             </div>
             <div className="p-2 bg-slate-50 rounded border border-slate-100">
               <p className="text-slate-400 font-bold uppercase tracking-wider">Délai client</p>
-              <p className="font-semibold text-slate-700">{formatDateShort(demande?.delaiMax)}</p>
+              <p className="font-semibold text-slate-700">{demande?.delaiMaxSouhaite == null ? '—' : `${demande.delaiMaxSouhaite} sem`}</p>
             </div>
             {Boolean(demande?.superficie) && (
               <div className="p-2 bg-slate-50 rounded border border-slate-100">
@@ -192,8 +192,8 @@ export default function BEDashboard() {
             <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-700">
               <p>Montant : <span className="font-semibold">{prop?.prix == null ? '—' : `${prop.prix} €`}</span></p>
               <p>Statut : <span className="font-semibold">{prop?.statut ? (STATUT_LABELS[prop.statut] ?? prop.statut) : '—'}</span></p>
-              <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} j`}</span></p>
-              <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention == null ? '—' : `${prop.delaiMaxIntervention} j`}</span></p>
+              <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} sem`}</span></p>
+              <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention == null ? '—' : `${prop.delaiMaxIntervention} sem`}</span></p>
             </div>
           </div>
 

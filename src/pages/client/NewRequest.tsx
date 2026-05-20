@@ -63,7 +63,7 @@ export default function NewRequest() {
 
       await createDemandeDevis({
         clientId: myClient.id,
-        delaiMax: data.delaiMax || undefined,
+        delaiMaxSouhaite: data.delaiMaxSouhaite ? Number(data.delaiMaxSouhaite) : undefined,
         type: data.type as TypeDemandeDevis,
         description: data.description,
         nombreLot: data.nombreLot ? Number(data.nombreLot) : undefined,
@@ -218,9 +218,11 @@ export default function NewRequest() {
                   error={errors.ville ? 'Requis' : undefined}
                 />
                 <Input
-                  type="date"
-                  label="Date de remise souhaitée"
-                  {...formRegister('delaiMax')}
+                  type="number"
+                  label="Délai maximum souhaité (semaines)"
+                  placeholder="Ex : 8"
+                  min={1}
+                  {...formRegister('delaiMaxSouhaite')}
                 />
               </div>
 

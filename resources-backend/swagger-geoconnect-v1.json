@@ -2860,9 +2860,9 @@
             "type": "integer",
             "format": "int64"
           },
-          "delaiMax": {
-            "type": "string",
-            "format": "date"
+          "delaiMaxSouhaite": {
+            "type": "integer",
+            "format": "int64"
           },
           "adresseProjet": {
             "$ref": "#/components/schemas/AdresseDTO"
@@ -3245,9 +3245,9 @@
             "type": "integer",
             "format": "int64"
           },
-          "delaiMax": {
-            "type": "string",
-            "format": "date"
+          "delaiMaxSouhaite": {
+            "type": "integer",
+            "format": "int64"
           },
           "type": {
             "type": "string",

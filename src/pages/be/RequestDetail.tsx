@@ -12,8 +12,6 @@ import { MapPin, Clock, ChevronLeft, FileCheck, Paperclip, History } from 'lucid
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useForm } from 'react-hook-form';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { TYPE_LABELS } from '../../constants/labels';
 
@@ -48,7 +46,7 @@ function ActivePropositionCard({ prop, statusConfig }: Readonly<ActivePropositio
           <div className="bg-current/10 p-2 rounded">
             <span className="block text-[10px] font-bold uppercase mb-1">Délai rendu</span>
             <span className="font-semibold text-xs">
-              {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} j`}
+              {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} sem`}
             </span>
           </div>
           <div className="bg-current/10 p-2 rounded">
@@ -59,7 +57,7 @@ function ActivePropositionCard({ prop, statusConfig }: Readonly<ActivePropositio
         {prop.delaiMaxIntervention != null && (
           <div className="bg-current/10 p-2 rounded">
             <span className="block text-[10px] font-bold uppercase mb-1">Délai intervention</span>
-            <span className="font-semibold text-xs">{prop.delaiMaxIntervention} j</span>
+            <span className="font-semibold text-xs">{prop.delaiMaxIntervention} sem</span>
           </div>
         )}
       </CardContent>
@@ -98,16 +96,16 @@ function OfferForm({ isResubmit, isSubmitting, register, errors, pdfFile, fileIn
             error={(errors as Record<string, { message?: string }>).prix ? 'Requis' : undefined}
           />
           <Input
-            label="DÉLAI RENDU (jours) *"
+            label="DÉLAI RENDU (semaines) *"
             type="number"
-            placeholder="Ex: 30"
+            placeholder="Ex: 4"
             {...register('delaiMaxRendu', { required: true })}
             error={(errors as Record<string, { message?: string }>).delaiMaxRendu ? 'Requis' : undefined}
           />
           <Input
-            label="DÉLAI INTERVENTION (jours, optionnel)"
+            label="DÉLAI INTERVENTION (semaines, optionnel)"
             type="number"
-            placeholder="Ex: 14"
+            placeholder="Ex: 2"
             {...register('delaiMaxIntervention')}
           />
           <div>
@@ -286,9 +284,9 @@ export default function BERequestDetail() {
                     <Clock className="w-3 h-3 mr-1" /> Échéance
                   </h4>
                   <p className="text-xs font-semibold text-slate-700">
-                    {demande.delaiMax
-                      ? format(new Date(demande.delaiMax), 'dd MMM yyyy', { locale: fr })
-                      : 'Flexible'}
+                    {demande.delaiMaxSouhaite == null
+                        ? 'Flexible'
+                        : `${demande.delaiMaxSouhaite} sem`}
                   </p>
                 </div>
               </div>
@@ -344,8 +342,8 @@ export default function BERequestDetail() {
                       <span className="font-mono font-bold text-slate-700">{rp.prix} €</span>
                     </div>
                     <div className="text-slate-500 mt-0.5">
-                      Rendu : {rp.delaiMaxRendu == null ? '—' : `${rp.delaiMaxRendu} j`}
-                      {rp.delaiMaxIntervention != null && ` · Intervention : ${rp.delaiMaxIntervention} j`}
+                      Rendu : {rp.delaiMaxRendu == null ? '—' : `${rp.delaiMaxRendu} sem`}
+                      {rp.delaiMaxIntervention != null && ` · Intervention : ${rp.delaiMaxIntervention} sem`}
                     </div>
                   </div>
                 ))}

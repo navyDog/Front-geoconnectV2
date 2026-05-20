@@ -44,7 +44,7 @@ export interface EnumValueDTO {
 
 export interface DemandeDevisDTO {
   id?: number;
-  delaiMax?: string;
+  delaiMaxSouhaite?: number;
   adresseProjet?: AdresseDTO;
   clientId?: number;
   type?: TypeDemandeDevis;
@@ -137,7 +137,7 @@ export interface BureauEtudesDetail {
 
 export interface DemandeDevisDetail {
   id?: number;
-  delaiMax?: string;
+  delaiMaxSouhaite?: number;
   type?: TypeDemandeDevis;
   nombreLot?: number;
   /** @deprecated Utiliser referencesCadastrales */

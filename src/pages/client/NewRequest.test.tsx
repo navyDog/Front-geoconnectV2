@@ -320,6 +320,78 @@ describe('NewRequest — soumission du formulaire', () => {
 
 
 
+describe('NewRequest — champ délai maximum souhaité (semaines)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (referentielApi.getTypesEtude as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TYPES);
+    (clientApi.getClientByUserId as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_CLIENT);
+    (demandeDevisApi.createDemandeDevis as ReturnType<typeof vi.fn>).mockResolvedValue({});
+  });
+
+  it('affiche le label "Délai maximum souhaité (semaines)"', async () => {
+    renderNewRequest();
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+    expect(screen.getByText(/délai maximum souhaité \(semaines\)/i)).toBeTruthy();
+  });
+
+  it('envoie delaiMaxSouhaite comme nombre quand une valeur est saisie', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.type(screen.getByPlaceholderText('Ex : 8'), '6');
+
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).toHaveBeenCalledWith(
+        expect.objectContaining({ delaiMaxSouhaite: 6 })
+      );
+    });
+  });
+
+  it("n'envoie pas delaiMaxSouhaite si le champ est laissé vide", async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    // champ délai non renseigné
+
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      const payload = (demandeDevisApi.createDemandeDevis as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(payload.delaiMaxSouhaite).toBeUndefined();
+    });
+  });
+
+  it("n'utilise plus le champ delaiMax (ancienne date)", async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      const payload = (demandeDevisApi.createDemandeDevis as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(payload).not.toHaveProperty('delaiMax');
+    });
+  });
+});
+
 describe('NewRequest — références cadastrales dynamiques', () => {
   beforeEach(() => {
     vi.clearAllMocks();
