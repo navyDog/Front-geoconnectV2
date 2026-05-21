@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/layout/ProtectedRoute';
+import { ApiInterceptorSetup } from './components/layout/ApiInterceptorSetup';
 
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -38,7 +39,8 @@ export default function App() {
     <ToastProvider>
       <AuthProvider>
         <Router>
-        <Routes>
+          <ApiInterceptorSetup />
+          <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<RootRedirect />} />
             <Route path="/login" element={<Login />} />

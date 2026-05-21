@@ -51,6 +51,15 @@ export const attacherDevisSigne = async (id: number, documentId: number): Promis
   return data;
 };
 
+/** CLIENT → upload le devis signé (sans changement d'état) — notifie le BE */
+export const uploaderDevisSigne = async (id: number, file: File): Promise<void> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  await api.post(`/etude/${id}/devis-signe/upload`, formData, {
+    headers: { 'Content-Type': undefined as any },
+  });
+};
+
 // ─── CRUD de base ─────────────────────────────────────────────────────────────
 
 export const createEtude = async (etude: EtudeDTO) => {
