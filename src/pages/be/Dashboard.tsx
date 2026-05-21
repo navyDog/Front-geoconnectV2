@@ -1,17 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useBEDashboardData } from '../../hooks/useBEDashboardData';
 import { useToast } from '../../contexts/ToastContext';
-import { ETAT_LABELS, STATUT_LABELS, TYPE_LABELS } from '../../constants/labels';
+import { STATUT_LABELS } from '../../constants/labels';
 import { formatDateShort } from '../../lib/formatters';
 import { DemandeDevisDTO, PropositionDevisDTO, EtudeDetailDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Calendar, ChevronRight, FlaskConical, User, Clock, AlertCircle, Landmark, Archive } from 'lucide-react';
-import { EtudeTypeIcon } from '../../components/etude/EtudeTypeIcon';
+import { Calendar, ChevronRight, FlaskConical, User, Clock, AlertCircle, Archive } from 'lucide-react';
 import { beMustAct } from '../../components/etude/EtudeStatusBadge';
+import { EtudeCardHeader } from '../../components/etude/EtudeCardHeader';
+import { DashboardTabNav } from '../../components/ui/DashboardTabNav';
 import { Link, useSearchParams } from 'react-router-dom';
 
 type TabType = 'OUVERT' | 'EN_ATTENTE' | 'ETUDE_EN_COURS' | 'ARCHIVES';
+
+// ─── État vide pour les onglets études dans la grille BE ──────────────────────
+
+function EtudesGridEmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="col-span-full py-12 text-center text-slate-500">
+      {icon}
+      <p>{text}</p>
+    </div>
+  );
+}
 
 export default function BEDashboard() {
   const { toastError } = useToast();
@@ -135,47 +147,14 @@ export default function BEDashboard() {
   };
 
   const renderEtudeCard = (etude: EtudeDetailDTO) => {
-    const prop = etude.propositionDevis;
+    const prop    = etude.propositionDevis;
     const demande = prop?.demandeDevis;
-    const client = demande?.client;
-    const etatInfo = etude.etat ? ETAT_LABELS[etude.etat] : null;
-    const parcelles: string[] = demande?.referencesCadastrales?.length
-      ? demande.referencesCadastrales : [];
+    const client  = demande?.client;
 
     return (
       <Card key={etude.id} className="border-slate-200 flex flex-col">
         <CardHeader>
-          <div className="flex justify-between items-start">
-            <div className="space-y-0.5">
-              <CardTitle className="flex items-center flex-wrap gap-x-1.5 text-slate-800">
-                <EtudeTypeIcon type={demande?.type} className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>{demande?.adresseProjet?.rue || demande?.adresseProjet?.ville || 'Projet géotechnique'}</span>
-                {(demande?.adresseProjet?.ville || demande?.adresseProjet?.codePostal) && (
-                  <span className="text-slate-400 font-normal text-xs">
-                    {[demande.adresseProjet.ville, demande.adresseProjet.codePostal].filter(Boolean).join(' ')}
-                  </span>
-                )}
-              </CardTitle>
-              {parcelles.length > 0 && (
-                <p className="flex items-center flex-wrap gap-x-1.5 text-[10px] text-slate-400 mt-0.5">
-                  <Landmark className="w-2.5 h-2.5 shrink-0" />
-                  {parcelles.join(' · ')}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
-              {demande?.type && (
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-semibold text-right">
-                  {TYPE_LABELS[demande.type] ?? demande.type}
-                </span>
-              )}
-              {etatInfo && (
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${etatInfo.color}`}>
-                  {etatInfo.label}
-                </span>
-              )}
-            </div>
-          </div>
+          <EtudeCardHeader demande={demande} etat={etude.etat} />
         </CardHeader>
         <CardContent className="pt-2 text-xs text-slate-600 space-y-3 flex-1">
           {/* Description */}
@@ -266,31 +245,16 @@ export default function BEDashboard() {
         </div>
       </div>
 
-      <div className="border-b border-slate-200">
-        <nav className="-mb-px flex space-x-6">
-          {[
-            { id: 'OUVERT',         label: 'Missions Disponibles', count: openDemandes.length },
-            { id: 'EN_ATTENTE',     label: 'En attente',           count: pendingItems.length },
-            { id: 'ETUDE_EN_COURS', label: 'Études en cours',      count: etudesEnCours.length },
-            { id: 'ARCHIVES',       label: 'Études archivées',      count: etudesArchivees.length },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => handleTabChange(tab.id as TabType)}
-                className={`whitespace-nowrap py-3 px-1 border-b-2 text-xs font-bold uppercase tracking-wider flex items-center
-                  ${isActive ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300'}`}
-              >
-                {tab.label}
-                <span className={`ml-2 py-0.5 px-2 rounded-full text-[10px] ${isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>
-                  {tab.count}
-                </span>
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+      <DashboardTabNav
+        activeTab={activeTab}
+        onTabChange={(id) => handleTabChange(id as TabType)}
+        tabs={[
+          { id: 'OUVERT',         label: 'Missions Disponibles', count: openDemandes.length },
+          { id: 'EN_ATTENTE',     label: 'En attente',           count: pendingItems.length },
+          { id: 'ETUDE_EN_COURS', label: 'Études en cours',      count: etudesEnCours.length },
+          { id: 'ARCHIVES',       label: 'Études archivées',      count: etudesArchivees.length },
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {activeTab === 'OUVERT' && (
@@ -308,22 +272,12 @@ export default function BEDashboard() {
         )}
         {activeTab === 'ETUDE_EN_COURS' && (
           etudesEnCours.length === 0
-            ? (
-              <div className="col-span-full py-12 text-center text-slate-500">
-                <FlaskConical className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                <p>Aucune étude en cours pour le moment.</p>
-              </div>
-            )
+            ? <EtudesGridEmptyState icon={<FlaskConical className="w-8 h-8 text-slate-300 mx-auto mb-3" />} text="Aucune étude en cours pour le moment." />
             : etudesEnCours.map(e => renderEtudeCard(e))
         )}
         {activeTab === 'ARCHIVES' && (
           etudesArchivees.length === 0
-            ? (
-              <div className="col-span-full py-12 text-center text-slate-500">
-                <Archive className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                <p>Aucune étude archivée pour le moment.</p>
-              </div>
-            )
+            ? <EtudesGridEmptyState icon={<Archive className="w-8 h-8 text-slate-300 mx-auto mb-3" />} text="Aucune étude archivée pour le moment." />
             : etudesArchivees.map(e => renderEtudeCard(e))
         )}
       </div>
