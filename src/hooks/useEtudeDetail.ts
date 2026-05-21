@@ -12,6 +12,7 @@ export function useEtudeDetail(id: string | undefined) {
   const [etude, setEtude] = useState<EtudeDetailDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [actionKey, setActionKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { if (error) toastError(error); }, [error, toastError]);
@@ -35,8 +36,9 @@ export function useEtudeDetail(id: string | undefined) {
    * On ne se fie pas à la réponse du PATCH (DTO partiel sans relations) pour
    * éviter les écrans vides après transition d'état.
    */
-  const withAction = useCallback(async (fn: () => Promise<unknown>) => {
+  const withAction = useCallback(async (fn: () => Promise<unknown>, key?: string) => {
     setActionLoading(true);
+    setActionKey(key ?? null);
     setError(null);
     try {
       await fn();
@@ -47,9 +49,10 @@ export function useEtudeDetail(id: string | undefined) {
       setError(msg);
     } finally {
       setActionLoading(false);
+      setActionKey(null);
     }
   }, [id]);
 
-  return { etude, isLoading, actionLoading, error, withAction };
+  return { etude, isLoading, actionLoading, actionKey, error, withAction };
 }
 

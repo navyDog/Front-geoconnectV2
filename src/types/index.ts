@@ -91,6 +91,7 @@ export interface EtudeDTO {
   chargeAffaire?: string;
   dateIntervention?: string;
   dateRendu?: string;
+  dateRenduPrevue?: string;
 }
 
 export type StatutDocument = 'ORPHELIN' | 'ATTACHE';
@@ -173,6 +174,7 @@ export interface EtudeDetailDTO {
   chargeAffaire?: string;
   dateIntervention?: string;
   dateRendu?: string;
+  dateRenduPrevue?: string;
   devisSigneId?: number;
   rapportId?: number;
   propositionDevis?: PropositionDevisDetail;

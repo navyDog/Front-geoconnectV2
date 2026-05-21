@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   proposerDateIntervention,
   marquerInterventionEffectuee,
   terminerRapport,
+  definirDateRenduPrevue,
 } from '../../api/etude';
 import { uploadDocument } from '../../api/document';
 import { EtatEtude } from '../../types';
@@ -13,13 +14,22 @@ import { EtudeDetailLayout, EtudeDetailLoadingSpinner } from '../../components/e
 import { InfoMsg } from '../../components/etude/InfoMsg';
 import { beMustAct } from '../../components/etude/EtudeStatusBadge';
 import {
-  CheckCircle2, Upload, AlertCircle, MapPin, Clock, User,
+  CheckCircle2, Upload, AlertCircle, MapPin, Clock, User, Pencil,
 } from 'lucide-react';
 import { useEtudeDetail } from '../../hooks/useEtudeDetail';
+import { formatDateLong } from '../../lib/formatters';
 
 export default function BEEtudeDetail() {
   const { id } = useParams<{ id: string }>();
-  const { etude, isLoading, actionLoading, error, withAction } = useEtudeDetail(id);
+  const { etude, isLoading, actionLoading, actionKey, error, withAction } = useEtudeDetail(id);
+
+  const [dateRenduPrevueInput, setDateRenduPrevueInput] = useState('');
+  const [editingDateRenduPrevue, setEditingDateRenduPrevue] = useState(false);
+
+  // Synchronise l'input avec la valeur retournée par le serveur
+  useEffect(() => {
+    setDateRenduPrevueInput(etude?.dateRenduPrevue ?? '');
+  }, [etude?.dateRenduPrevue]);
 
   if (isLoading) return <EtudeDetailLoadingSpinner />;
   if (!etude) return <div className="text-center text-slate-500 py-12">Étude introuvable.</div>;
@@ -28,6 +38,62 @@ export default function BEEtudeDetail() {
   const demande = prop?.demandeDevis;
   const client  = demande?.client;
   const etat    = etude.etat as EtatEtude | undefined;
+
+  const showDateRenduPrevueEditor =
+    etat === 'DATE_INTERVENTION_FIXEE' || etat === 'INTERVENTION_EFFECTUEE';
+
+  const dateSaving = actionLoading && actionKey === 'dateRenduPrevue';
+  const interventionLoading = actionLoading && actionKey !== 'dateRenduPrevue';
+  const hasExistingDate = !!etude.dateRenduPrevue;
+
+  const handleSaveDateRenduPrevue = async () => {
+    await withAction(() => definirDateRenduPrevue(etude.id, dateRenduPrevueInput), 'dateRenduPrevue');
+    setEditingDateRenduPrevue(false);
+  };
+
+  const dateRenduPrevueEditor = showDateRenduPrevueEditor ? (
+    (!editingDateRenduPrevue && hasExistingDate) ? (
+      // Mode lecture : date formatée + badge jours restants + icône crayon
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-semibold text-slate-800 text-xs">{formatDateLong(etude.dateRenduPrevue)}</span>
+        <DaysRemainingBadge dateIso={etude.dateRenduPrevue} />
+        <button
+          onClick={() => setEditingDateRenduPrevue(true)}
+          className="text-slate-400 hover:text-blue-600 transition-colors"
+          title="Modifier la date"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    ) : (
+      // Mode édition : input + bouton enregistrer + annuler si date existante
+      <div className="flex flex-wrap gap-2 items-center">
+        <input
+          type="date"
+          value={dateRenduPrevueInput}
+          onChange={e => setDateRenduPrevueInput(e.target.value)}
+          className="border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <Button
+          onClick={handleSaveDateRenduPrevue}
+          disabled={!dateRenduPrevueInput}
+          isLoading={dateSaving}
+          variant="secondary"
+        >
+          Enregistrer
+        </Button>
+        {hasExistingDate && (
+          <Button
+            onClick={() => { setEditingDateRenduPrevue(false); setDateRenduPrevueInput(etude.dateRenduPrevue ?? ''); }}
+            variant="ghost"
+            disabled={dateSaving}
+          >
+            Annuler
+          </Button>
+        )}
+      </div>
+    )
+  ) : undefined;
 
   const infoCard = (
     <Card>
@@ -74,25 +140,63 @@ export default function BEEtudeDetail() {
     </div>
   ) : undefined;
 
+  const backTo = etat === 'PAIEMENT_EFFECTUE'
+    ? '/be/dashboard?tab=ARCHIVES'
+    : '/be/dashboard?tab=ETUDE_EN_COURS';
+
   return (
     <EtudeDetailLayout
       etude={etude}
       error={error}
-      backTo="/be/dashboard?tab=ETUDE_EN_COURS"
+      backTo={backTo}
       headerLabel="Gestion d'étude"
       actionBanner={actionBanner}
       infoCard={infoCard}
       etatRole="BE"
+      dateRenduPrevueEditor={dateRenduPrevueEditor}
       renderActions={() => (
         <BEStepActions
           etat={etat}
-          isLoading={actionLoading}
+          isLoading={interventionLoading}
           onProposerDate={(date) => withAction(() => proposerDateIntervention(etude.id, date))}
           onInterventionEffectuee={() => withAction(() => marquerInterventionEffectuee(etude.id))}
-          onTerminerRapport={(rapportId, dateRendu) => withAction(() => terminerRapport(etude.id, rapportId, dateRendu))}
+          onTerminerRapport={(rapportId) => withAction(() => terminerRapport(etude.id, rapportId))}
         />
       )}
     />
+  );
+}
+
+// ─── Badge jours restants ─────────────────────────────────────────────────────
+
+function DaysRemainingBadge({ dateIso }: { dateIso: string }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateIso);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+
+  let label: string;
+  let colorClass: string;
+
+  if (diff > 7) {
+    label = `${diff} j restants`;
+    colorClass = 'bg-green-100 text-green-700';
+  } else if (diff > 0) {
+    label = `${diff} j restants`;
+    colorClass = 'bg-orange-100 text-orange-700';
+  } else if (diff === 0) {
+    label = 'Aujourd\'hui';
+    colorClass = 'bg-amber-100 text-amber-700';
+  } else {
+    label = `${Math.abs(diff)} j de retard`;
+    colorClass = 'bg-red-100 text-red-700';
+  }
+
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${colorClass}`}>
+      {label}
+    </span>
   );
 }
 
@@ -103,25 +207,26 @@ interface BEStepActionsProps {
   isLoading: boolean;
   onProposerDate: (date: string) => void;
   onInterventionEffectuee: () => void;
-  onTerminerRapport: (rapportId: number, dateRendu: string) => void;
+  onTerminerRapport: (rapportId: number) => void;
 }
 
 function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectuee, onTerminerRapport }: BEStepActionsProps) {
   const [dateInput, setDateInput] = useState('');
   const [rapportFile, setRapportFile] = useState<File | null>(null);
-  const [dateRenduInput, setDateRenduInput] = useState('');
   const [uploading, setUploading] = useState(false);
 
+
   const handleTerminerRapport = async () => {
-    if (!rapportFile || !dateRenduInput) return;
+    if (!rapportFile) return;
     setUploading(true);
     try {
       const doc = await uploadDocument(rapportFile);
-      if (doc.id) onTerminerRapport(doc.id, dateRenduInput);
+      if (doc.id) onTerminerRapport(doc.id);
     } finally {
       setUploading(false);
     }
   };
+
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -157,10 +262,12 @@ function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectue
 
     case 'DATE_INTERVENTION_FIXEE':
       return (
-        <Button onClick={onInterventionEffectuee} isLoading={isLoading}>
-          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-          Marquer l'intervention effectuée
-        </Button>
+        <div className="space-y-3">
+          <Button onClick={onInterventionEffectuee} isLoading={isLoading}>
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+            Marquer l'intervention effectuée
+          </Button>
+        </div>
       );
 
     case 'INTERVENTION_EFFECTUEE':
@@ -177,20 +284,9 @@ function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectue
               className="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-              Date de remise du rapport
-            </label>
-            <input
-              type="date"
-              value={dateRenduInput}
-              onChange={e => setDateRenduInput(e.target.value)}
-              className="border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
           <Button
             onClick={handleTerminerRapport}
-            disabled={!rapportFile || !dateRenduInput}
+            disabled={!rapportFile}
             isLoading={isLoading || uploading}
           >
             <Upload className="w-3.5 h-3.5 mr-1.5" />

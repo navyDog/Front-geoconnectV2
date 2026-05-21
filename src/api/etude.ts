@@ -27,9 +27,15 @@ export const marquerInterventionEffectuee = async (id: number): Promise<EtudeDet
   return data;
 };
 
-/** BE → clôture le rapport (nécessite un document déjà uploadé) */
-export const terminerRapport = async (id: number, rapportId: number, dateRendu: string): Promise<EtudeDetailDTO> => {
-  const { data } = await api.patch(`/etude/${id}/rapport-termine`, { rapportId, dateRendu });
+/** BE → clôture le rapport (nécessite un document déjà uploadé) — dateRendu fixée automatiquement à la date du jour par le backend */
+export const terminerRapport = async (id: number, rapportId: number): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/rapport-termine`, { rapportId });
+  return data;
+};
+
+/** BE → enregistre la date de rendu prévue sans modifier l'état de l'étude */
+export const definirDateRenduPrevue = async (id: number, dateRenduPrevue: string): Promise<EtudeDetailDTO> => {
+  const { data } = await api.patch(`/etude/${id}/date-rendu-prevue`, { dateRenduPrevue });
   return data;
 };
 
@@ -43,6 +49,15 @@ export const confirmerPaiement = async (id: number): Promise<EtudeDetailDTO> => 
 export const attacherDevisSigne = async (id: number, documentId: number): Promise<EtudeDetailDTO> => {
   const { data } = await api.patch(`/etude/${id}/devis-signe`, { documentId });
   return data;
+};
+
+/** CLIENT → upload le devis signé (sans changement d'état) — notifie le BE */
+export const uploaderDevisSigne = async (id: number, file: File): Promise<void> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  await api.post(`/etude/${id}/devis-signe/upload`, formData, {
+    headers: { 'Content-Type': undefined as any },
+  });
 };
 
 // ─── CRUD de base ─────────────────────────────────────────────────────────────

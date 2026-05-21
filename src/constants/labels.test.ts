@@ -13,7 +13,15 @@ const ALL_ETATS: EtatEtude[] = [
 
 const ALL_STATUTS: StatutProposition[] = ['EN_ATTENTE', 'ACCEPTEE', 'REFUSEE'];
 
-const ALL_TYPES: TypeDemandeDevis[] = ['G1', 'G2_AVP', 'G2_PRO'];
+const ALL_TYPES: TypeDemandeDevis[] = [
+  'ASSAINISSEMENT',
+  'G0',
+  'G1_ES_PGC',
+  'G1_ELAN',
+  'G2_AVP',
+  'G2_PRO',
+  'G5',
+];
 
 describe('ETAT_LABELS', () => {
   it('couvre tous les EtatEtude sans entrée manquante', () => {
@@ -66,9 +74,12 @@ describe('TYPE_LABELS', () => {
   });
 
   it('les libellés contiennent le code de type', () => {
-    expect(TYPE_LABELS['G1']).toContain('G1');
+    expect(TYPE_LABELS['G1_ES_PGC']).toContain('G1');
+    expect(TYPE_LABELS['G1_ELAN']).toContain('G1');
     expect(TYPE_LABELS['G2_AVP']).toContain('G2 AVP');
     expect(TYPE_LABELS['G2_PRO']).toContain('G2 PRO');
+    expect(TYPE_LABELS['G0']).toContain('G0');
+    expect(TYPE_LABELS['G5']).toContain('G5');
   });
 });
 

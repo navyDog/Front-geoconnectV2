@@ -16,8 +16,12 @@ export const STATUT_LABELS: Record<StatutProposition, string> = {
 };
 
 export const TYPE_LABELS: Record<TypeDemandeDevis, string> = {
-  G1:     'G1 — Étude de site',
-  G2_AVP: 'G2 AVP — Avant-projet',
-  G2_PRO: 'G2 PRO — Projet',
+  ASSAINISSEMENT: 'Etude d\'assainissement',
+  G0:             'G0 — Sondage',
+  G1_ES_PGC:      'G1 ES PGC — Étude de site',
+  G1_ELAN:        'G1 ÉLAN — Étude de site',
+  G2_AVP:         'G2 AVP — Avant-projet',
+  G2_PRO:         'G2 PRO — Projet',
+  G5:             'G5 — Diagnostic',
 };
 

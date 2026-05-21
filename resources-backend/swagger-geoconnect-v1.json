@@ -705,6 +705,66 @@
         ]
       }
     },
+    "/etude/{id}/devis-signe/upload": {
+      "post": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[CLIENT] Upload le devis signé — notifie le BE (sans changement d'état)",
+        "operationId": "uploaderDevisSigne",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé au rôle CLIENT ou étude non rattachée à ce client"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          },
+          "200": {
+            "description": "Devis signé uploadé avec succès"
+          },
+          "400": {
+            "description": "Fichier vide ou invalide"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/documents/upload": {
       "post": {
         "tags": [
@@ -1033,14 +1093,14 @@
           }
         ],
         "responses": {
+          "403": {
+            "description": "Réservé au rôle CLIENT ou étude non rattachée à ce client"
+          },
           "200": {
             "description": "Date validée avec succès"
           },
           "400": {
             "description": "Transition invalide"
-          },
-          "403": {
-            "description": "Réservé au rôle CLIENT"
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
@@ -1078,11 +1138,11 @@
           "200": {
             "description": "Date refusée, nouvelle proposition attendue"
           },
+          "403": {
+            "description": "Réservé au rôle CLIENT ou étude non rattachée à ce client"
+          },
           "400": {
             "description": "Transition invalide"
-          },
-          "403": {
-            "description": "Réservé au rôle CLIENT"
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
@@ -1103,7 +1163,7 @@
         "tags": [
           "etude-controller"
         ],
-        "summary": "[BE] Marque le rapport terminé et l'attache → RAPPORT_TERMINE",
+        "summary": "[BE] Téléverse le rapport → RAPPORT_TERMINE (dateRendu = date du jour automatique)",
         "operationId": "marquerRapportTermine",
         "parameters": [
           {
@@ -1130,17 +1190,17 @@
           "404": {
             "description": "Etude ou document introuvable"
           },
-          "403": {
-            "description": "Réservé au rôle BUREAU_ETUDE"
-          },
-          "400": {
-            "description": "Transition invalide ou données manquantes"
+          "200": {
+            "description": "Rapport terminé et attaché, dateRendu mise à la date du jour"
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
           },
-          "200": {
-            "description": "Rapport terminé et attaché"
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE ou étude non rattachée à ce BE"
+          },
+          "400": {
+            "description": "Transition invalide ou rapportId manquant"
           }
         },
         "security": [
@@ -1179,11 +1239,11 @@
           "required": true
         },
         "responses": {
-          "403": {
-            "description": "Réservé au rôle BUREAU_ETUDE"
-          },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE ou étude non rattachée à ce BE"
           },
           "404": {
             "description": "Etude introuvable"
@@ -1221,11 +1281,11 @@
           }
         ],
         "responses": {
+          "403": {
+            "description": "Réservé au rôle CLIENT ou étude non rattachée à ce client"
+          },
           "400": {
             "description": "Transition invalide"
-          },
-          "403": {
-            "description": "Réservé au rôle CLIENT"
           },
           "200": {
             "description": "Paiement confirmé"
@@ -1269,11 +1329,11 @@
           "400": {
             "description": "Transition invalide"
           },
-          "403": {
-            "description": "Réservé au rôle BUREAU_ETUDE"
-          },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE ou étude non rattachée à ce BE"
           },
           "404": {
             "description": "Etude introuvable"
@@ -1318,17 +1378,69 @@
           "404": {
             "description": "Etude ou document introuvable"
           },
-          "403": {
-            "description": "Réservé au rôle BUREAU_ETUDE"
-          },
           "400": {
             "description": "Document manquant"
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
           },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE ou étude non rattachée à ce BE"
+          },
           "200": {
             "description": "Devis signé attaché avec succès"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/date-rendu-prevue": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[BE] Enregistre la date de rendu prévue sans modifier l'état de l'étude",
+        "operationId": "definirDateRenduPrevue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DateRenduPrevueRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Date de rendu prévue enregistrée"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE ou étude non rattachée à ce BE"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          },
+          "400": {
+            "description": "Transition invalide ou date manquante"
           }
         },
         "security": [
@@ -3185,6 +3297,10 @@
             "type": "string",
             "format": "date"
           },
+          "dateRenduPrevue": {
+            "type": "string",
+            "format": "date"
+          },
           "dateRendu": {
             "type": "string",
             "format": "date"
@@ -3279,7 +3395,6 @@
       },
       "RapportTermineRequestDTO": {
         "required": [
-          "dateRendu",
           "rapportId"
         ],
         "type": "object",
@@ -3287,10 +3402,6 @@
           "rapportId": {
             "type": "integer",
             "format": "int64"
-          },
-          "dateRendu": {
-            "type": "string",
-            "format": "date"
           }
         }
       },
@@ -3318,6 +3429,18 @@
           }
         }
       },
+      "DateRenduPrevueRequestDTO": {
+        "required": [
+          "dateRenduPrevue"
+        ],
+        "type": "object",
+        "properties": {
+          "dateRenduPrevue": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
       "EnumValueDTO": {
         "type": "object",
         "properties": {
@@ -3340,6 +3463,7 @@
             "type": "string",
             "enum": [
               "NOUVELLE_DEMANDE_DEVIS",
+              "DEVIS_SIGNE_UPLOADE",
               "PROPOSITION_ACCEPTEE",
               "DATE_INTERVENTION_VALIDEE",
               "DATE_INTERVENTION_REFUSEE",
@@ -3488,6 +3612,10 @@
             "type": "string"
           },
           "dateIntervention": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateRenduPrevue": {
             "type": "string",
             "format": "date"
           },
