@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   proposerDateIntervention,
   marquerInterventionEffectuee,
   terminerRapport,
+  definirDateRenduPrevue,
 } from '../../api/etude';
 import { uploadDocument } from '../../api/document';
 import { EtatEtude } from '../../types';
@@ -87,9 +88,11 @@ export default function BEEtudeDetail() {
         <BEStepActions
           etat={etat}
           isLoading={actionLoading}
+          currentDateRenduPrevue={etude.dateRenduPrevue}
           onProposerDate={(date) => withAction(() => proposerDateIntervention(etude.id, date))}
           onInterventionEffectuee={() => withAction(() => marquerInterventionEffectuee(etude.id))}
-          onTerminerRapport={(rapportId, dateRendu) => withAction(() => terminerRapport(etude.id, rapportId, dateRendu))}
+          onTerminerRapport={(rapportId) => withAction(() => terminerRapport(etude.id, rapportId))}
+          onDefinirDateRenduPrevue={(date) => withAction(() => definirDateRenduPrevue(etude.id, date))}
         />
       )}
     />
@@ -101,27 +104,60 @@ export default function BEEtudeDetail() {
 interface BEStepActionsProps {
   etat?: EtatEtude;
   isLoading: boolean;
+  /** Valeur actuelle côté serveur — pré-remplit l'input et se met à jour après sauvegarde */
+  currentDateRenduPrevue?: string;
   onProposerDate: (date: string) => void;
   onInterventionEffectuee: () => void;
-  onTerminerRapport: (rapportId: number, dateRendu: string) => void;
+  onTerminerRapport: (rapportId: number) => void;
+  onDefinirDateRenduPrevue: (date: string) => void;
 }
 
-function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectuee, onTerminerRapport }: BEStepActionsProps) {
+function BEStepActions({ etat, isLoading, currentDateRenduPrevue, onProposerDate, onInterventionEffectuee, onTerminerRapport, onDefinirDateRenduPrevue }: BEStepActionsProps) {
   const [dateInput, setDateInput] = useState('');
   const [rapportFile, setRapportFile] = useState<File | null>(null);
-  const [dateRenduInput, setDateRenduInput] = useState('');
+  const [dateRenduPrevueInput, setDateRenduPrevueInput] = useState(currentDateRenduPrevue ?? '');
   const [uploading, setUploading] = useState(false);
 
+  // Synchronise l'input avec la valeur retournée par le serveur après chaque sauvegarde
+  useEffect(() => {
+    setDateRenduPrevueInput(currentDateRenduPrevue ?? '');
+  }, [currentDateRenduPrevue]);
+
   const handleTerminerRapport = async () => {
-    if (!rapportFile || !dateRenduInput) return;
+    if (!rapportFile) return;
     setUploading(true);
     try {
       const doc = await uploadDocument(rapportFile);
-      if (doc.id) onTerminerRapport(doc.id, dateRenduInput);
+      if (doc.id) onTerminerRapport(doc.id);
     } finally {
       setUploading(false);
     }
   };
+
+  /** Bloc commun de saisie de la date de rendu prévue (sans transition d'état) */
+  const dateRenduPrevueBlock = (
+    <div className="space-y-1.5">
+      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+        Date de rendu prévue
+      </label>
+      <div className="flex flex-wrap gap-2 items-center">
+        <input
+          type="date"
+          value={dateRenduPrevueInput}
+          onChange={e => setDateRenduPrevueInput(e.target.value)}
+          className="border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <Button
+          onClick={() => { onDefinirDateRenduPrevue(dateRenduPrevueInput); setDateRenduPrevueInput(''); }}
+          disabled={!dateRenduPrevueInput}
+          isLoading={isLoading}
+          variant="secondary"
+        >
+          Enregistrer
+        </Button>
+      </div>
+    </div>
+  );
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -157,16 +193,20 @@ function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectue
 
     case 'DATE_INTERVENTION_FIXEE':
       return (
-        <Button onClick={onInterventionEffectuee} isLoading={isLoading}>
-          <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-          Marquer l'intervention effectuée
-        </Button>
+        <div className="space-y-3">
+          {dateRenduPrevueBlock}
+          <Button onClick={onInterventionEffectuee} isLoading={isLoading}>
+            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+            Marquer l'intervention effectuée
+          </Button>
+        </div>
       );
 
     case 'INTERVENTION_EFFECTUEE':
       return (
         <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
-          <div>
+          {dateRenduPrevueBlock}
+          <div className="border-t border-slate-200 pt-3">
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
               Rapport final (PDF)
             </label>
@@ -177,20 +217,9 @@ function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectue
               className="text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-              Date de remise du rapport
-            </label>
-            <input
-              type="date"
-              value={dateRenduInput}
-              onChange={e => setDateRenduInput(e.target.value)}
-              className="border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
           <Button
             onClick={handleTerminerRapport}
-            disabled={!rapportFile || !dateRenduInput}
+            disabled={!rapportFile}
             isLoading={isLoading || uploading}
           >
             <Upload className="w-3.5 h-3.5 mr-1.5" />

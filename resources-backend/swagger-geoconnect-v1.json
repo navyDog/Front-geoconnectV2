@@ -1103,7 +1103,7 @@
         "tags": [
           "etude-controller"
         ],
-        "summary": "[BE] Marque le rapport terminé et l'attache → RAPPORT_TERMINE",
+        "summary": "[BE] Téléverse le rapport → RAPPORT_TERMINE (dateRendu = date du jour automatique)",
         "operationId": "marquerRapportTermine",
         "parameters": [
           {
@@ -1133,14 +1133,14 @@
           "403": {
             "description": "Réservé au rôle BUREAU_ETUDE"
           },
-          "400": {
-            "description": "Transition invalide ou données manquantes"
+          "200": {
+            "description": "Rapport terminé et attaché, dateRendu mise à la date du jour"
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
           },
-          "200": {
-            "description": "Rapport terminé et attaché"
+          "400": {
+            "description": "Transition invalide ou rapportId manquant"
           }
         },
         "security": [
@@ -1329,6 +1329,58 @@
           },
           "200": {
             "description": "Devis signé attaché avec succès"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/etude/{id}/date-rendu-prevue": {
+      "patch": {
+        "tags": [
+          "etude-controller"
+        ],
+        "summary": "[BE] Enregistre la date de rendu prévue sans modifier l'état de l'étude",
+        "operationId": "definirDateRenduPrevue",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DateRenduPrevueRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Date de rendu prévue enregistrée"
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE"
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide"
+          },
+          "404": {
+            "description": "Etude introuvable"
+          },
+          "400": {
+            "description": "Transition invalide ou date manquante"
           }
         },
         "security": [
@@ -3185,6 +3237,10 @@
             "type": "string",
             "format": "date"
           },
+          "dateRenduPrevue": {
+            "type": "string",
+            "format": "date"
+          },
           "dateRendu": {
             "type": "string",
             "format": "date"
@@ -3279,7 +3335,6 @@
       },
       "RapportTermineRequestDTO": {
         "required": [
-          "dateRendu",
           "rapportId"
         ],
         "type": "object",
@@ -3287,10 +3342,6 @@
           "rapportId": {
             "type": "integer",
             "format": "int64"
-          },
-          "dateRendu": {
-            "type": "string",
-            "format": "date"
           }
         }
       },
@@ -3315,6 +3366,18 @@
           "documentId": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "DateRenduPrevueRequestDTO": {
+        "required": [
+          "dateRenduPrevue"
+        ],
+        "type": "object",
+        "properties": {
+          "dateRenduPrevue": {
+            "type": "string",
+            "format": "date"
           }
         }
       },
@@ -3488,6 +3551,10 @@
             "type": "string"
           },
           "dateIntervention": {
+            "type": "string",
+            "format": "date"
+          },
+          "dateRenduPrevue": {
             "type": "string",
             "format": "date"
           },
