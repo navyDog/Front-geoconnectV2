@@ -14,13 +14,22 @@ import { EtudeDetailLayout, EtudeDetailLoadingSpinner } from '../../components/e
 import { InfoMsg } from '../../components/etude/InfoMsg';
 import { beMustAct } from '../../components/etude/EtudeStatusBadge';
 import {
-  CheckCircle2, Upload, AlertCircle, MapPin, Clock, User,
+  CheckCircle2, Upload, AlertCircle, MapPin, Clock, User, Pencil,
 } from 'lucide-react';
 import { useEtudeDetail } from '../../hooks/useEtudeDetail';
+import { formatDateLong } from '../../lib/formatters';
 
 export default function BEEtudeDetail() {
   const { id } = useParams<{ id: string }>();
-  const { etude, isLoading, actionLoading, error, withAction } = useEtudeDetail(id);
+  const { etude, isLoading, actionLoading, actionKey, error, withAction } = useEtudeDetail(id);
+
+  const [dateRenduPrevueInput, setDateRenduPrevueInput] = useState('');
+  const [editingDateRenduPrevue, setEditingDateRenduPrevue] = useState(false);
+
+  // Synchronise l'input avec la valeur retournée par le serveur
+  useEffect(() => {
+    setDateRenduPrevueInput(etude?.dateRenduPrevue ?? '');
+  }, [etude?.dateRenduPrevue]);
 
   if (isLoading) return <EtudeDetailLoadingSpinner />;
   if (!etude) return <div className="text-center text-slate-500 py-12">Étude introuvable.</div>;
@@ -29,6 +38,62 @@ export default function BEEtudeDetail() {
   const demande = prop?.demandeDevis;
   const client  = demande?.client;
   const etat    = etude.etat as EtatEtude | undefined;
+
+  const showDateRenduPrevueEditor =
+    etat === 'DATE_INTERVENTION_FIXEE' || etat === 'INTERVENTION_EFFECTUEE';
+
+  const dateSaving = actionLoading && actionKey === 'dateRenduPrevue';
+  const interventionLoading = actionLoading && actionKey !== 'dateRenduPrevue';
+  const hasExistingDate = !!etude.dateRenduPrevue;
+
+  const handleSaveDateRenduPrevue = async () => {
+    await withAction(() => definirDateRenduPrevue(etude.id, dateRenduPrevueInput), 'dateRenduPrevue');
+    setEditingDateRenduPrevue(false);
+  };
+
+  const dateRenduPrevueEditor = showDateRenduPrevueEditor ? (
+    (!editingDateRenduPrevue && hasExistingDate) ? (
+      // Mode lecture : date formatée + badge jours restants + icône crayon
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-semibold text-slate-800 text-xs">{formatDateLong(etude.dateRenduPrevue)}</span>
+        <DaysRemainingBadge dateIso={etude.dateRenduPrevue} />
+        <button
+          onClick={() => setEditingDateRenduPrevue(true)}
+          className="text-slate-400 hover:text-blue-600 transition-colors"
+          title="Modifier la date"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    ) : (
+      // Mode édition : input + bouton enregistrer + annuler si date existante
+      <div className="flex flex-wrap gap-2 items-center">
+        <input
+          type="date"
+          value={dateRenduPrevueInput}
+          onChange={e => setDateRenduPrevueInput(e.target.value)}
+          className="border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <Button
+          onClick={handleSaveDateRenduPrevue}
+          disabled={!dateRenduPrevueInput}
+          isLoading={dateSaving}
+          variant="secondary"
+        >
+          Enregistrer
+        </Button>
+        {hasExistingDate && (
+          <Button
+            onClick={() => { setEditingDateRenduPrevue(false); setDateRenduPrevueInput(etude.dateRenduPrevue ?? ''); }}
+            variant="ghost"
+            disabled={dateSaving}
+          >
+            Annuler
+          </Button>
+        )}
+      </div>
+    )
+  ) : undefined;
 
   const infoCard = (
     <Card>
@@ -84,18 +149,50 @@ export default function BEEtudeDetail() {
       actionBanner={actionBanner}
       infoCard={infoCard}
       etatRole="BE"
+      dateRenduPrevueEditor={dateRenduPrevueEditor}
       renderActions={() => (
         <BEStepActions
           etat={etat}
-          isLoading={actionLoading}
-          currentDateRenduPrevue={etude.dateRenduPrevue}
+          isLoading={interventionLoading}
           onProposerDate={(date) => withAction(() => proposerDateIntervention(etude.id, date))}
           onInterventionEffectuee={() => withAction(() => marquerInterventionEffectuee(etude.id))}
           onTerminerRapport={(rapportId) => withAction(() => terminerRapport(etude.id, rapportId))}
-          onDefinirDateRenduPrevue={(date) => withAction(() => definirDateRenduPrevue(etude.id, date))}
         />
       )}
     />
+  );
+}
+
+// ─── Badge jours restants ─────────────────────────────────────────────────────
+
+function DaysRemainingBadge({ dateIso }: { dateIso: string }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateIso);
+  target.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+
+  let label: string;
+  let colorClass: string;
+
+  if (diff > 7) {
+    label = `${diff} j restants`;
+    colorClass = 'bg-green-100 text-green-700';
+  } else if (diff > 0) {
+    label = `${diff} j restants`;
+    colorClass = 'bg-orange-100 text-orange-700';
+  } else if (diff === 0) {
+    label = 'Aujourd\'hui';
+    colorClass = 'bg-amber-100 text-amber-700';
+  } else {
+    label = `${Math.abs(diff)} j de retard`;
+    colorClass = 'bg-red-100 text-red-700';
+  }
+
+  return (
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${colorClass}`}>
+      {label}
+    </span>
   );
 }
 
@@ -104,24 +201,16 @@ export default function BEEtudeDetail() {
 interface BEStepActionsProps {
   etat?: EtatEtude;
   isLoading: boolean;
-  /** Valeur actuelle côté serveur — pré-remplit l'input et se met à jour après sauvegarde */
-  currentDateRenduPrevue?: string;
   onProposerDate: (date: string) => void;
   onInterventionEffectuee: () => void;
   onTerminerRapport: (rapportId: number) => void;
-  onDefinirDateRenduPrevue: (date: string) => void;
 }
 
-function BEStepActions({ etat, isLoading, currentDateRenduPrevue, onProposerDate, onInterventionEffectuee, onTerminerRapport, onDefinirDateRenduPrevue }: BEStepActionsProps) {
+function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectuee, onTerminerRapport }: BEStepActionsProps) {
   const [dateInput, setDateInput] = useState('');
   const [rapportFile, setRapportFile] = useState<File | null>(null);
-  const [dateRenduPrevueInput, setDateRenduPrevueInput] = useState(currentDateRenduPrevue ?? '');
   const [uploading, setUploading] = useState(false);
 
-  // Synchronise l'input avec la valeur retournée par le serveur après chaque sauvegarde
-  useEffect(() => {
-    setDateRenduPrevueInput(currentDateRenduPrevue ?? '');
-  }, [currentDateRenduPrevue]);
 
   const handleTerminerRapport = async () => {
     if (!rapportFile) return;
@@ -134,30 +223,6 @@ function BEStepActions({ etat, isLoading, currentDateRenduPrevue, onProposerDate
     }
   };
 
-  /** Bloc commun de saisie de la date de rendu prévue (sans transition d'état) */
-  const dateRenduPrevueBlock = (
-    <div className="space-y-1.5">
-      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-        Date de rendu prévue
-      </label>
-      <div className="flex flex-wrap gap-2 items-center">
-        <input
-          type="date"
-          value={dateRenduPrevueInput}
-          onChange={e => setDateRenduPrevueInput(e.target.value)}
-          className="border border-slate-300 rounded px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-        <Button
-          onClick={() => { onDefinirDateRenduPrevue(dateRenduPrevueInput); setDateRenduPrevueInput(''); }}
-          disabled={!dateRenduPrevueInput}
-          isLoading={isLoading}
-          variant="secondary"
-        >
-          Enregistrer
-        </Button>
-      </div>
-    </div>
-  );
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -194,7 +259,6 @@ function BEStepActions({ etat, isLoading, currentDateRenduPrevue, onProposerDate
     case 'DATE_INTERVENTION_FIXEE':
       return (
         <div className="space-y-3">
-          {dateRenduPrevueBlock}
           <Button onClick={onInterventionEffectuee} isLoading={isLoading}>
             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
             Marquer l'intervention effectuée
@@ -205,8 +269,7 @@ function BEStepActions({ etat, isLoading, currentDateRenduPrevue, onProposerDate
     case 'INTERVENTION_EFFECTUEE':
       return (
         <div className="space-y-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
-          {dateRenduPrevueBlock}
-          <div className="border-t border-slate-200 pt-3">
+          <div>
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
               Rapport final (PDF)
             </label>

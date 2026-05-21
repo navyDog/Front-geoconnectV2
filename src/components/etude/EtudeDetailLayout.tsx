@@ -24,6 +24,8 @@ interface EtudeDetailLayoutProps {
   etatRole: 'CLIENT' | 'BE';
   /** Fabrique les boutons d'action contextuels dans le stepper */
   renderActions: () => React.ReactNode;
+  /** Éditeur de la date de rendu prévue à afficher dans la carte Dates (optionnel, BE uniquement) */
+  dateRenduPrevueEditor?: React.ReactNode;
 }
 
 /**
@@ -40,6 +42,7 @@ export function EtudeDetailLayout({
   infoCard,
   etatRole,
   renderActions,
+  dateRenduPrevueEditor,
 }: EtudeDetailLayoutProps) {
   const prop    = etude.propositionDevis;
   const demande = prop?.demandeDevis;
@@ -100,10 +103,17 @@ export function EtudeDetailLayout({
                 <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Intervention</span>
                 <span className="font-semibold text-slate-800">{formatDateLong(etude.dateIntervention) ?? '—'}</span>
               </div>
-              <div className="flex justify-between p-2 rounded bg-slate-50 border border-slate-100">
-                <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Rendu prévu</span>
-                <span className="font-semibold text-slate-800">{formatDateLong(etude.dateRenduPrevue) ?? '—'}</span>
-              </div>
+              {dateRenduPrevueEditor ? (
+                <div className="p-2 rounded bg-slate-50 border border-slate-100 space-y-1.5">
+                  <span className="block text-slate-500 font-bold uppercase tracking-wider text-[10px]">Rendu prévu</span>
+                  {dateRenduPrevueEditor}
+                </div>
+              ) : (
+                <div className="flex justify-between p-2 rounded bg-slate-50 border border-slate-100">
+                  <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Rendu prévu</span>
+                  <span className="font-semibold text-slate-800">{formatDateLong(etude.dateRenduPrevue) ?? '—'}</span>
+                </div>
+              )}
               <div className="flex justify-between p-2 rounded bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Rendu effectif</span>
                 <span className="font-semibold text-slate-800">{formatDateLong(etude.dateRendu) ?? '—'}</span>
