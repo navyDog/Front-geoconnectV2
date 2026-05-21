@@ -67,11 +67,15 @@ export default function ClientEtudeDetail() {
     </div>
   ) : undefined;
 
+  const backTo = etat === 'PAIEMENT_EFFECTUE'
+    ? '/client/dashboard?tab=ARCHIVES'
+    : '/client/dashboard?tab=ETUDES';
+
   return (
     <EtudeDetailLayout
       etude={etude}
       error={error}
-      backTo="/client/dashboard?tab=ETUDES"
+      backTo={backTo}
       headerLabel="Suivi d'étude"
       actionBanner={actionBanner}
       infoCard={infoCard}

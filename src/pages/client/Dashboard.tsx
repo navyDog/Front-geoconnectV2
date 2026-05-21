@@ -4,11 +4,12 @@ import { useClientDashboardData } from '../../hooks/useClientDashboardData';
 import { ETAT_LABELS, STATUT_LABELS, TYPE_LABELS } from '../../constants/labels';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical, Building2, AlertCircle } from 'lucide-react';
+import { MapPin, Calendar, Clock, FileText, ChevronRight, FlaskConical, Building2, AlertCircle, Landmark, Archive } from 'lucide-react';
+import { EtudeTypeIcon } from '../../components/etude/EtudeTypeIcon';
 import { clientMustAct } from '../../components/etude/EtudeStatusBadge';
 import { Link, useSearchParams } from 'react-router-dom';
 
-type TabType = 'DEMANDES' | 'ETUDES';
+type TabType = 'DEMANDES' | 'ETUDES' | 'ARCHIVES';
 
 export default function ClientDashboard() {
   const { toastError } = useToast();
@@ -51,9 +52,10 @@ export default function ClientDashboard() {
   }
 
   const demandesEnCours = demandes.filter(d => !d.propositions?.some(p => p.statut === 'ACCEPTEE'));
-  const etudesTotales   = etudes.length;
-  const etudesTerminees = etudes.filter(e => e.etat === 'RAPPORT_TERMINE' || e.etat === 'PAIEMENT_EFFECTUE').length;
-  const etudesEnCours   = etudesTotales - etudesTerminees;
+  const etudesTotales    = etudes.length;
+  const etudesArchivees  = etudes.filter(e => e.etat === 'PAIEMENT_EFFECTUE');
+  const etudesEnCours    = etudes.filter(e => e.etat !== 'PAIEMENT_EFFECTUE');
+  const etudesTerminees  = etudes.filter(e => e.etat === 'RAPPORT_TERMINE' || e.etat === 'PAIEMENT_EFFECTUE').length;
 
 
   return (
@@ -79,7 +81,7 @@ export default function ClientDashboard() {
             <div className="w-px h-6 bg-slate-200"></div>
             <div>
              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">En Cours</p>
-             <p className="text-sm font-bold text-orange-600">{etudesEnCours}</p>
+             <p className="text-sm font-bold text-orange-600">{etudesEnCours.length}</p>
             </div>
             <div className="w-px h-6 bg-slate-200"></div>
             <div>
@@ -95,8 +97,9 @@ export default function ClientDashboard() {
       <div className="border-b border-slate-200">
         <nav className="-mb-px flex space-x-6">
           {[
-            { id: 'DEMANDES', label: 'Mes Demandes',    count: demandesEnCours.length, hidden: demandesEnCours.length === 0 },
-            { id: 'ETUDES',   label: 'Études en cours', count: etudes.length,          hidden: false },
+            { id: 'DEMANDES', label: 'Mes Demandes',       count: demandesEnCours.length,   hidden: demandesEnCours.length === 0 },
+            { id: 'ETUDES',   label: 'Études en cours',    count: etudesEnCours.length,     hidden: false },
+            { id: 'ARCHIVES', label: 'Études archivées',   count: etudesArchivees.length,   hidden: etudesArchivees.length === 0 },
           ].filter(tab => !tab.hidden).map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -182,7 +185,7 @@ export default function ClientDashboard() {
 
       {/* Onglet Études */}
       {activeTab === 'ETUDES' && (
-        etudes.length === 0 ? (
+        etudesEnCours.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <div className="mx-auto w-16 h-16 bg-slate-100 flex items-center justify-center rounded-full mb-4">
@@ -194,32 +197,45 @@ export default function ClientDashboard() {
           </Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 gap-4">
-            {etudes.map(etude => {
+            {etudesEnCours.map(etude => {
               const prop = etude.propositionDevis;
               const demande = prop?.demandeDevis;
               const bureau = prop?.bureauEtude;
               const etatInfo = etude.etat ? ETAT_LABELS[etude.etat] : null;
+              const parcelles: string[] = demande?.referencesCadastrales ?? [];
               return (
                 <Card key={etude.id} className="flex flex-col border-slate-200">
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
-                        <CardTitle className="flex items-center">
-                          <FlaskConical className="w-3.5 h-3.5 mr-1 text-slate-400"/>
-                          {demande?.adresseProjet?.ville || 'Projet géotechnique'}
-                          {demande?.adresseProjet?.codePostal && (
-                            <span className="text-slate-400 font-normal ml-2 text-xs">({demande.adresseProjet.codePostal})</span>
+                        <CardTitle className="flex items-center flex-wrap gap-x-1.5">
+                          <EtudeTypeIcon type={demande?.type} className="w-3.5 h-3.5 text-slate-400 shrink-0"/>
+                          <span>{demande?.adresseProjet?.rue || demande?.adresseProjet?.ville || 'Projet géotechnique'}</span>
+                          {(demande?.adresseProjet?.ville || demande?.adresseProjet?.codePostal) && (
+                            <span className="text-slate-400 font-normal text-xs">
+                              {[demande.adresseProjet.ville, demande.adresseProjet.codePostal].filter(Boolean).join(' ')}
+                            </span>
                           )}
                         </CardTitle>
-                        <CardDescription>
-                          {demande?.type ? TYPE_LABELS[demande.type] ?? demande.type : 'Étude géotechnique'}
-                        </CardDescription>
+                        {parcelles.length > 0 && (
+                          <p className="flex items-center flex-wrap gap-x-1.5 text-[10px] text-slate-400 mt-0.5">
+                            <Landmark className="w-2.5 h-2.5 shrink-0" />
+                            {parcelles.join(' · ')}
+                          </p>
+                        )}
                       </div>
-                      {etatInfo && (
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${etatInfo.color}`}>
-                          {etatInfo.label}
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
+                        {demande?.type && (
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-semibold text-right">
+                            {TYPE_LABELS[demande.type] ?? demande.type}
+                          </span>
+                        )}
+                        {etatInfo && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${etatInfo.color}`}>
+                            {etatInfo.label}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-2 space-y-3 flex-1">
@@ -257,7 +273,7 @@ export default function ClientDashboard() {
                       </div>
                     </div>
                   </CardContent>
-                  {etude.id && (
+                  {!!(etude.id) && (
                     <CardFooter>
                       <Link to={`/client/etude/${etude.id}`} className="w-full">
                         <Button
@@ -267,6 +283,107 @@ export default function ClientDashboard() {
                         >
                           {clientMustAct(etude.etat) && <AlertCircle className="w-3 h-3 mr-1.5 text-orange-500" />}
                           Suivre l'étude <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </CardFooter>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      {/* Onglet Études archivées */}
+      {activeTab === 'ARCHIVES' && (
+        etudesArchivees.length === 0 ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="mx-auto w-16 h-16 bg-slate-100 flex items-center justify-center rounded-full mb-4">
+                <Archive className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Aucune étude archivée</h3>
+              <p className="text-slate-500">Les études dont le paiement a été effectué apparaîtront ici.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-6 gap-4">
+            {etudesArchivees.map(etude => {
+              const prop = etude.propositionDevis;
+              const demande = prop?.demandeDevis;
+              const bureau = prop?.bureauEtude;
+              const etatInfo = etude.etat ? ETAT_LABELS[etude.etat] : null;
+              const parcelles: string[] = demande?.referencesCadastrales ?? [];
+              return (
+                <Card key={etude.id} className="flex flex-col border-green-200 bg-green-50/30">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <CardTitle className="flex items-center flex-wrap gap-x-1.5">
+                          <EtudeTypeIcon type={demande?.type} className="w-3.5 h-3.5 text-slate-400 shrink-0"/>
+                          <span>{demande?.adresseProjet?.rue || demande?.adresseProjet?.ville || 'Projet géotechnique'}</span>
+                          {(demande?.adresseProjet?.ville || demande?.adresseProjet?.codePostal) && (
+                            <span className="text-slate-400 font-normal text-xs">
+                              {[demande.adresseProjet.ville, demande.adresseProjet.codePostal].filter(Boolean).join(' ')}
+                            </span>
+                          )}
+                        </CardTitle>
+                        {parcelles.length > 0 && (
+                          <p className="flex items-center flex-wrap gap-x-1.5 text-[10px] text-slate-400 mt-0.5">
+                            <Landmark className="w-2.5 h-2.5 shrink-0" />
+                            {parcelles.join(' · ')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
+                        {demande?.type && (
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-[10px] font-semibold text-right">
+                            {TYPE_LABELS[demande.type] ?? demande.type}
+                          </span>
+                        )}
+                        {etatInfo && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${etatInfo.color}`}>
+                            {etatInfo.label}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-2 space-y-3 flex-1">
+                    <p className="text-xs text-slate-600 line-clamp-2">{demande?.description || 'Aucune description.'}</p>
+                    {bureau && (
+                      <div className="flex items-center gap-1.5 p-2 bg-slate-50 rounded border border-slate-100 text-[11px]">
+                        <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="text-slate-500 font-bold uppercase tracking-wider mr-1">Bureau :</span>
+                        <span className="font-semibold text-slate-700">{bureau.raisonSociale || '—'}</span>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2 text-[11px]">
+                      <div className="p-2 bg-slate-50 rounded border border-slate-100">
+                        <p className="text-slate-400 font-bold uppercase tracking-wider">Réf. projet</p>
+                        <p className="text-slate-700 font-semibold">{demande?.id ? `#MES-${demande.id}` : '—'}</p>
+                      </div>
+                      <div className="p-2 bg-slate-50 rounded border border-slate-100">
+                        <p className="text-slate-400 font-bold uppercase tracking-wider">Délai souhaité</p>
+                        <p className="text-slate-700 font-semibold">{demande?.delaiMaxSouhaite == null ? '—' : `${demande.delaiMaxSouhaite} sem`}</p>
+                      </div>
+                    </div>
+                    <div className="p-2 bg-green-50 rounded border border-green-100 text-[11px]">
+                      <p className="text-green-700 font-bold uppercase tracking-wider mb-1">Offre retenue</p>
+                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-700">
+                        <p>Montant : <span className="font-semibold">{prop?.prix == null ? '—' : `${prop.prix} €`}</span></p>
+                        <p>Statut : <span className="font-semibold">{prop?.statut ? (STATUT_LABELS[prop.statut] ?? prop.statut) : '—'}</span></p>
+                        <p>Rendu : <span className="font-semibold">{prop?.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} sem`}</span></p>
+                        <p>Intervention : <span className="font-semibold">{prop?.delaiMaxIntervention == null ? '—' : `${prop.delaiMaxIntervention} sem`}</span></p>
+                      </div>
+                    </div>
+                  </CardContent>
+                  {!!(etude.id) && (
+                    <CardFooter>
+                      <Link to={`/client/etude/${etude.id}`} className="w-full">
+                        <Button variant="outline" size="sm" className="w-full group border-green-300 text-green-700 hover:bg-green-50">
+                          <Archive className="w-3 h-3 mr-1.5 text-green-500" />
+                          Consulter l'étude <ChevronRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
                         </Button>
                       </Link>
                     </CardFooter>

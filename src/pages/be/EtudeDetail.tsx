@@ -140,11 +140,15 @@ export default function BEEtudeDetail() {
     </div>
   ) : undefined;
 
+  const backTo = etat === 'PAIEMENT_EFFECTUE'
+    ? '/be/dashboard?tab=ARCHIVES'
+    : '/be/dashboard?tab=ETUDE_EN_COURS';
+
   return (
     <EtudeDetailLayout
       etude={etude}
       error={error}
-      backTo="/be/dashboard?tab=ETUDE_EN_COURS"
+      backTo={backTo}
       headerLabel="Gestion d'étude"
       actionBanner={actionBanner}
       infoCard={infoCard}
