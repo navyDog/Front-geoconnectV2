@@ -112,7 +112,7 @@ function QuoteTunnel() {
 
       await createDemandeDevis({
         clientId,
-        delaiMax: data.delaiMax || undefined,
+        delaiMaxSouhaite: data.delaiMaxSouhaite ? Number(data.delaiMaxSouhaite) : undefined,
         type: data.type as TypeDemandeDevis,
         description: data.description,
         nombreLot: data.nombreLot ? Number(data.nombreLot) : undefined,
@@ -249,9 +249,11 @@ function QuoteTunnel() {
                 />
               </div>
               <Input
-                type="date"
-                label="Délai maximum souhaité (facultatif)"
-                {...formRegister('delaiMax')}
+                type="number"
+                label="Délai maximum souhaité (semaines, facultatif)"
+                placeholder="Ex : 8"
+                min={1}
+                {...formRegister('delaiMaxSouhaite')}
               />
 
               {/* Document joint */}

@@ -4,12 +4,16 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LogOut } from 'lucide-react';
 import { getClientByUserId } from '../../api/client';
 import { getBureauByUserId } from '../../api/bureauEtude';
+import { useNotifications } from '../../hooks/useNotifications';
+import { NotificationBell } from '../ui/NotificationBell';
 
 export default function MainLayout() {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [identityLabel, setIdentityLabel] = useState<string>('');
+
+  const notifications = useNotifications(isAuthenticated);
 
   useEffect(() => {
     async function loadIdentityLabel() {
@@ -96,6 +100,15 @@ export default function MainLayout() {
                 <p className="text-xs font-bold leading-none">{identityLabel || roleLabel}</p>
                 <p className="text-[10px] text-slate-400">{user?.login} • {roleLabel}</p>
               </div>
+              <NotificationBell
+                unreadCount={notifications.unreadCount}
+                notifications={notifications.notifications}
+                isLoadingList={notifications.isLoadingList}
+                listError={notifications.listError}
+                loadNotifications={notifications.loadNotifications}
+                markAsRead={notifications.markAsRead}
+                markAllAsRead={notifications.markAllAsRead}
+              />
               <button
                 onClick={handleLogout}
                 className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center hover:bg-slate-600 transition-colors"

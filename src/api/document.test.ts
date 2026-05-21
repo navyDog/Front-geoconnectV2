@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { openDocument, downloadDocument } from './document';
+import { openDocument, downloadDocument, uploadDocument, getAllDocuments, deleteDocument } from './document';
 
 vi.mock('./index', () => ({
   default: {
@@ -86,3 +86,81 @@ describe('downloadDocument', () => {
     expect(clickedLinks[0].download).toBe('document-7');
   });
 });
+
+// ─── uploadDocument ───────────────────────────────────────────────────────────
+
+describe('uploadDocument', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('envoie un POST /documents/upload avec un FormData et retourne le DocumentDTO', async () => {
+    const fakeDoc = { id: 1, nomTelechargement: 'rapport.pdf', nomOriginal: 'rapport.pdf' };
+    const { default: api } = await import('./index');
+    (api.post as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: fakeDoc });
+
+    const file = new File(['content'], 'rapport.pdf', { type: 'application/pdf' });
+    const result = await uploadDocument(file);
+
+    expect(api.post).toHaveBeenCalledOnce();
+    const [url, body, config] = (api.post as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toBe('/documents/upload');
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.get('file')).toBe(file);
+    expect(config.headers['Content-Type']).toBeUndefined();
+    expect(result).toEqual(fakeDoc);
+  });
+
+  it('propage l\'erreur si l\'upload échoue', async () => {
+    const { default: api } = await import('./index');
+    (api.post as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Payload too large'));
+
+    const file = new File(['x'], 'big.pdf');
+    await expect(uploadDocument(file)).rejects.toThrow('Payload too large');
+  });
+});
+
+// ─── getAllDocuments ──────────────────────────────────────────────────────────
+
+describe('getAllDocuments', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('appelle GET /documents et retourne la liste', async () => {
+    const fakeList = [{ id: 1, nomTelechargement: 'a.pdf' }, { id: 2, nomTelechargement: 'b.pdf' }];
+    const { default: api } = await import('./index');
+    (api.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: fakeList });
+
+    const result = await getAllDocuments();
+
+    expect(api.get).toHaveBeenCalledWith('/documents');
+    expect(result).toEqual(fakeList);
+  });
+
+  it('propage l\'erreur réseau', async () => {
+    const { default: api } = await import('./index');
+    (api.get as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
+
+    await expect(getAllDocuments()).rejects.toThrow('Network error');
+  });
+});
+
+// ─── deleteDocument ───────────────────────────────────────────────────────────
+
+describe('deleteDocument', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('appelle DELETE /documents/{id}', async () => {
+    const { default: api } = await import('./index');
+    (api.delete as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
+
+    await deleteDocument(42);
+
+    expect(api.delete).toHaveBeenCalledWith('/documents/42');
+  });
+
+  it('propage l\'erreur si le document n\'existe pas', async () => {
+    const { default: api } = await import('./index');
+    (api.delete as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Not found'));
+
+    await expect(deleteDocument(999)).rejects.toThrow('Not found');
+  });
+});
+

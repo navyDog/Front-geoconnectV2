@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { getDemandeDevisById } from '../../api/demandeDevis';
 import { getPropositionDevisByDemandeId, accepterPropositionDevis, refuserPropositionDevis } from '../../api/propositionDevis';
 import { DemandeDevisDTO, PropositionDevisDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { BackButton } from '../../components/ui/BackButton';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
-import { MapPin, Clock, ChevronLeft, Building2, CheckCircle2, FileText } from 'lucide-react';
+import { MapPin, Clock, Building2, CheckCircle2, FileText } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
-import { format } from 'date-fns';
 
 export default function ClientRequestDetail() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +18,7 @@ export default function ClientRequestDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<number | null>(null);
   const [confirmAcceptId, setConfirmAcceptId] = useState<number | null>(null);
+  const [confirmRefuseId, setConfirmRefuseId] = useState<number | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -84,10 +85,7 @@ export default function ClientRequestDetail() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-4">
-      <Link to="/client/dashboard" className="inline-flex items-center text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-colors uppercase tracking-wider">
-        <ChevronLeft className="w-3 h-3 mr-1" />
-        Retour aux demandes
-      </Link>
+      <BackButton to="/client/dashboard?tab=DEMANDES" label="Retour aux demandes" />
 
       <div className="flex flex-col md:flex-row gap-4">
         
@@ -114,11 +112,11 @@ export default function ClientRequestDetail() {
                     {demande.type || 'Standard'}
                   </span>
                 </div>
-                {demande.delaiMax && (
+                {demande.delaiMaxSouhaite && (
                   <div>
-                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Délai Max</span>
+                    <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Délai Max Souhaité</span>
                     <span className="font-semibold text-slate-800">
-                      {format(new Date(demande.delaiMax), 'dd/MM/yyyy')}
+                      {demande.delaiMaxSouhaite} sem
                     </span>
                   </div>
                 )}
@@ -173,7 +171,7 @@ export default function ClientRequestDetail() {
                             {prop.prix} €
                           </td>
                           <td className="px-4 py-3 text-slate-600">
-                            {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} j`}
+                            {prop.delaiMaxRendu == null ? '—' : `${prop.delaiMaxRendu} sem`}
                           </td>
                           <td className="px-4 py-3 text-center">
                             {isAccepted ? (
@@ -186,7 +184,7 @@ export default function ClientRequestDetail() {
                                 <div className="flex justify-center gap-2">
                                   <Button
                                       size="sm"
-                                      onClick={() => setConfirmAcceptId(prop.id!)}
+                                      onClick={() => setConfirmAcceptId(prop.id)}
                                       isLoading={isProcessing === prop.id}
                                   >
                                     Accepter
@@ -194,7 +192,7 @@ export default function ClientRequestDetail() {
                                   <Button
                                       size="sm"
                                       variant="destructive"
-                                      onClick={() => handleRefuse(prop.id!)}
+                                      onClick={() => setConfirmRefuseId(prop.id)}
                                       isLoading={isProcessing === prop.id}
                                   >
                                     Refuser
@@ -225,6 +223,22 @@ export default function ClientRequestDetail() {
             await handleAccept(id);
           }}
           onCancel={() => setConfirmAcceptId(null)}
+        />
+      )}
+
+      {confirmRefuseId !== null && (
+        <ConfirmModal
+          title="Refuser cette proposition ?"
+          message="Êtes-vous sûr de vouloir refuser cette offre ? Cette action est irréversible."
+          confirmLabel="Refuser l'offre"
+          cancelLabel="Annuler"
+          isLoading={isProcessing === confirmRefuseId}
+          onConfirm={async () => {
+            const id = confirmRefuseId;
+            setConfirmRefuseId(null);
+            await handleRefuse(id);
+          }}
+          onCancel={() => setConfirmRefuseId(null)}
         />
       )}
     </div>

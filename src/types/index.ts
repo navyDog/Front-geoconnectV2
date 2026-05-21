@@ -27,16 +27,31 @@ export interface BureauEtudesDTO {
   utilisateurId?: number;
 }
 
-export type TypeDemandeDevis = 'G1' | 'G2_AVP' | 'G2_PRO';
+export type TypeDemandeDevis =
+  | 'ASSAINISSEMENT'
+  | 'G0'
+  | 'G1_ES_PGC'
+  | 'G1_ELAN'
+  | 'G2_AVP'
+  | 'G2_PRO'
+  | 'G5';
+
+/** Objet retourné par le référentiel : code technique + libellé lisible. */
+export interface EnumValueDTO {
+  code: string;
+  libelle: string;
+}
 
 export interface DemandeDevisDTO {
   id?: number;
-  delaiMax?: string;
+  delaiMaxSouhaite?: number;
   adresseProjet?: AdresseDTO;
   clientId?: number;
   type?: TypeDemandeDevis;
   nombreLot?: number;
+  /** @deprecated Utiliser referencesCadastrales */
   referenceCadastrale?: string;
+  referencesCadastrales?: string[];
   superficie?: number;
   description?: string;
   docsDevisId?: number;
@@ -122,10 +137,12 @@ export interface BureauEtudesDetail {
 
 export interface DemandeDevisDetail {
   id?: number;
-  delaiMax?: string;
+  delaiMaxSouhaite?: number;
   type?: TypeDemandeDevis;
   nombreLot?: number;
+  /** @deprecated Utiliser referencesCadastrales */
   referenceCadastrale?: string;
+  referencesCadastrales?: string[];
   superficie?: number;
   description?: string;
   docsDevisId?: number;
@@ -160,3 +177,25 @@ export interface EtudeDetailDTO {
   rapportId?: number;
   propositionDevis?: PropositionDevisDetail;
 }
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | 'NOUVELLE_DEMANDE_DEVIS'
+  | 'PROPOSITION_ACCEPTEE'
+  | 'DATE_INTERVENTION_VALIDEE'
+  | 'DATE_INTERVENTION_REFUSEE'
+  | 'PAIEMENT_CONFIRME'
+  | 'NOUVELLE_PROPOSITION_DEVIS'
+  | 'DATE_INTERVENTION_PROPOSEE'
+  | 'RAPPORT_DISPONIBLE';
+
+export interface NotificationDTO {
+  id: number;
+  type: NotificationType;
+  message: string;
+  lienAction?: string;
+  lue: boolean;
+  createdAt: string;
+}
+

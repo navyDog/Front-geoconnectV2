@@ -1,15 +1,16 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDemandeDevis } from '../../api/demandeDevis';
 import { getClientByUserId } from '../../api/client';
 import { uploadDocument } from '../../api/document';
-import { MapPin, Paperclip } from 'lucide-react';
+import { getTypesEtude } from '../../api/referentiel';
+import { MapPin, Paperclip, Plus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { TypeDemandeDevis } from '../../types';
+import { EnumValueDTO, TypeDemandeDevis } from '../../types';
 
 export default function NewRequest() {
   const navigate = useNavigate();
@@ -19,6 +20,27 @@ export default function NewRequest() {
   const [errorDetails, setErrorDetails] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [typesEtude, setTypesEtude] = useState<EnumValueDTO[]>([]);
+  const [loadingTypes, setLoadingTypes] = useState(true);
+  const [referencesCadastrales, setReferencesCadastrales] = useState<string[]>(['']);
+
+  useEffect(() => {
+    getTypesEtude()
+      .then(setTypesEtude)
+      .catch(() => {
+        // Fallback statique si l'API est indisponible
+        setTypesEtude([
+          { code: 'ASSAINISSEMENT', libelle: 'ASSAINISSEMENT — Assainissement' },
+          { code: 'G0', libelle: 'G0 — Étude préalable' },
+          { code: 'G1_ES_PGC', libelle: 'G1 ES PGC — Étude de site (PGC)' },
+          { code: 'G1_ELAN', libelle: 'G1 ELAN — Étude de site (ELAN)' },
+          { code: 'G2_AVP', libelle: 'G2 AVP — Avant-projet' },
+          { code: 'G2_PRO', libelle: 'G2 PRO — Projet' },
+          { code: 'G5', libelle: 'G5 — Diagnostic' },
+        ]);
+      })
+      .finally(() => setLoadingTypes(false));
+  }, []);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -41,11 +63,11 @@ export default function NewRequest() {
 
       await createDemandeDevis({
         clientId: myClient.id,
-        delaiMax: data.delaiMax || undefined,
+        delaiMaxSouhaite: data.delaiMaxSouhaite ? Number(data.delaiMaxSouhaite) : undefined,
         type: data.type as TypeDemandeDevis,
         description: data.description,
         nombreLot: data.nombreLot ? Number(data.nombreLot) : undefined,
-        referenceCadastrale: data.referenceCadastrale || undefined,
+        referencesCadastrales: referencesCadastrales.filter((r) => r.trim() !== ''),
         superficie: data.superficie ? Number(data.superficie) : undefined,
         docsDevisId,
         adresseProjet: {
@@ -94,13 +116,18 @@ export default function NewRequest() {
                   Type de mission *
                 </label>
                 <select
-                  className="w-full h-11 px-3 py-2 bg-white border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400 transition-colors"
+                  className="w-full h-11 px-3 py-2 bg-white border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400 transition-colors disabled:opacity-50"
+                  disabled={loadingTypes}
                   {...formRegister('type', { required: true })}
                 >
-                  <option value="">Sélectionner...</option>
-                  <option value="G1">G1 — Étude de site</option>
-                  <option value="G2_AVP">G2 AVP — Avant-projet</option>
-                  <option value="G2_PRO">G2 PRO — Projet</option>
+                  <option value="">
+                    {loadingTypes ? 'Chargement…' : 'Sélectionner…'}
+                  </option>
+                  {typesEtude.map((t) => (
+                    <option key={t.code} value={t.code}>
+                      {t.libelle}
+                    </option>
+                  ))}
                 </select>
                 {errors.type && <span className="text-red-500 text-xs mt-1 block">Ce champ est requis</span>}
               </div>
@@ -112,11 +139,52 @@ export default function NewRequest() {
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Référence cadastrale"
-                  placeholder="Ex : AB 0042"
-                  {...formRegister('referenceCadastrale')}
-                />
+                {/* Références cadastrales — liste dynamique */}
+                <div className="sm:col-span-2">
+                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    Références cadastrales
+                  </label>
+                  <div className="space-y-2">
+                    {referencesCadastrales.map((ref, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={ref}
+                          onChange={(e) => {
+                            const updated = [...referencesCadastrales];
+                            updated[index] = e.target.value;
+                            setReferencesCadastrales(updated);
+                          }}
+                          placeholder="Ex : AB 0042"
+                          className="flex-1 h-11 px-3 py-2 bg-white border border-slate-200 rounded-md text-sm outline-none focus:border-slate-400 transition-colors"
+                        />
+                        {referencesCadastrales.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setReferencesCadastrales(
+                                referencesCadastrales.filter((_, i) => i !== index)
+                              )
+                            }
+                            className="p-2 rounded-md text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setReferencesCadastrales([...referencesCadastrales, ''])}
+                      className="flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 px-3 py-1.5 rounded-md transition-colors border border-dashed border-slate-300"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Ajouter une référence
+                    </button>
+                  </div>
+                </div>
+
                 <Input
                   label="Superficie (m²)"
                   type="number"
@@ -150,9 +218,11 @@ export default function NewRequest() {
                   error={errors.ville ? 'Requis' : undefined}
                 />
                 <Input
-                  type="date"
-                  label="Date de remise souhaitée"
-                  {...formRegister('delaiMax')}
+                  type="number"
+                  label="Délai maximum souhaité (semaines)"
+                  placeholder="Ex : 8"
+                  min={1}
+                  {...formRegister('delaiMaxSouhaite')}
                 />
               </div>
 

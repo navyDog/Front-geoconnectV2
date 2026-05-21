@@ -54,7 +54,19 @@ export default defineConfig(({mode}) => {
         provider: 'v8',
         reporter: ['text', 'html', 'lcov'],
         include: ['src/**/*.{ts,tsx}'],
-        exclude: ['src/main.tsx', 'src/vite-env.d.ts'],
+        exclude: [
+          // Fichiers d'infrastructure / entrée
+          'src/main.tsx',
+          'src/vite-env.d.ts',
+          // Types purs TypeScript — aucune logique exécutable
+          'src/types/**',
+          // Routing — configuration déclarative, pas de logique métier
+          'src/App.tsx',
+          // Pages — composants UI de haut niveau, couverts par tests E2E
+          'src/pages/**',
+          // Composants présentationnels — couverts par tests E2E/visuels
+          'src/components/**',
+        ],
       },
     },
   };
