@@ -78,10 +78,10 @@ export const EtudeStepper: React.FC<EtudeStepperProps> = ({ etat, role, renderAc
   return (
     <div className="relative">
       {ETUDE_STEPS.map((step, index) => {
-        const isCompleted = index < currentIndex;
-        const isCurrent   = index === currentIndex;
-        const isPending   = index > currentIndex;
         const isLast      = index === ETUDE_STEPS.length - 1;
+        const isCompleted = index < currentIndex || (isLast && index === currentIndex);
+        const isCurrent   = index === currentIndex && !isLast;
+        const isPending   = index > currentIndex;
 
         const description = role === 'CLIENT' ? step.descriptionClient : step.descriptionBE;
         const actions = isCurrent && renderActions ? renderActions(step, index) : null;
