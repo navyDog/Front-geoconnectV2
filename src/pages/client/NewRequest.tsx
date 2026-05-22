@@ -1,16 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext';
 import { createDemandeDevis } from '../../api/demandeDevis';
 import { getClientByUserId } from '../../api/client';
 import { uploadDocument } from '../../api/document';
-import { getTypesEtude } from '../../api/referentiel';
+import { useTypesEtude } from '../../hooks/useTypesEtude';
 import { MapPin, Paperclip, Plus, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { EnumValueDTO, TypeDemandeDevis } from '../../types';
+import { TypeDemandeDevis } from '../../types';
 
 export default function NewRequest() {
   const navigate = useNavigate();
@@ -20,27 +20,8 @@ export default function NewRequest() {
   const [errorDetails, setErrorDetails] = useState('');
   const [docFile, setDocFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [typesEtude, setTypesEtude] = useState<EnumValueDTO[]>([]);
-  const [loadingTypes, setLoadingTypes] = useState(true);
+  const { typesEtude, loading: loadingTypes } = useTypesEtude();
   const [referencesCadastrales, setReferencesCadastrales] = useState<string[]>(['']);
-
-  useEffect(() => {
-    getTypesEtude()
-      .then(setTypesEtude)
-      .catch(() => {
-        // Fallback statique si l'API est indisponible
-        setTypesEtude([
-          { code: 'ASSAINISSEMENT', libelle: 'ASSAINISSEMENT — Assainissement' },
-          { code: 'G0', libelle: 'G0 — Étude préalable' },
-          { code: 'G1_ES_PGC', libelle: 'G1 ES PGC — Étude de site (PGC)' },
-          { code: 'G1_ELAN', libelle: 'G1 ELAN — Étude de site (ELAN)' },
-          { code: 'G2_AVP', libelle: 'G2 AVP — Avant-projet' },
-          { code: 'G2_PRO', libelle: 'G2 PRO — Projet' },
-          { code: 'G5', libelle: 'G5 — Diagnostic' },
-        ]);
-      })
-      .finally(() => setLoadingTypes(false));
-  }, []);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
