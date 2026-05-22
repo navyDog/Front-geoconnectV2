@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { registerCall } from '../api/auth';
@@ -9,8 +9,19 @@ import { useForm } from 'react-hook-form';
 import { createClient, getClientByUserId } from '../api/client';
 import { createDemandeDevis } from '../api/demandeDevis';
 import { uploadDocument } from '../api/document';
+import { getTypesEtude } from '../api/referentiel';
 import { MapPin, Briefcase, Mail, Paperclip } from 'lucide-react';
-import { TypeDemandeDevis } from '../types';
+import { EnumValueDTO, TypeDemandeDevis } from '../types';
+
+const FALLBACK_TYPES: EnumValueDTO[] = [
+  { code: 'ASSAINISSEMENT', libelle: 'ASSAINISSEMENT — Assainissement' },
+  { code: 'G0',             libelle: 'G0 — Étude préalable' },
+  { code: 'G1_ES_PGC',      libelle: 'G1 ES PGC — Étude de site (PGC)' },
+  { code: 'G1_ELAN',        libelle: 'G1 ÉLAN — Étude de site (ÉLAN)' },
+  { code: 'G2_AVP',         libelle: 'G2 AVP — Avant-projet' },
+  { code: 'G2_PRO',         libelle: 'G2 PRO — Projet' },
+  { code: 'G5',             libelle: 'G5 — Diagnostic' },
+];
 
 export default function Home() {
   const [step, setStep] = useState(0);
@@ -50,8 +61,17 @@ function QuoteTunnel() {
   const [error, setError] = useState<string | null>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [typesEtude, setTypesEtude] = useState<EnumValueDTO[]>([]);
+  const [loadingTypes, setLoadingTypes] = useState(true);
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    getTypesEtude()
+      .then(setTypesEtude)
+      .catch(() => setTypesEtude(FALLBACK_TYPES))
+      .finally(() => setLoadingTypes(false));
+  }, []);
 
   const { register: formRegister, handleSubmit, formState: { errors } } = useForm();
 
@@ -173,12 +193,17 @@ function QuoteTunnel() {
                 <label className="block text-sm font-medium text-slate-700">Type de mission *</label>
                 <select
                   {...formRegister('type', { required: true })}
-                  className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingTypes}
+                  className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 >
-                  <option value="">Sélectionnez un type</option>
-                  <option value="G1">G1 — Étude de site</option>
-                  <option value="G2_AVP">G2 AVP — Avant-projet</option>
-                  <option value="G2_PRO">G2 PRO — Projet</option>
+                  <option value="">
+                    {loadingTypes ? 'Chargement…' : 'Sélectionnez un type'}
+                  </option>
+                  {typesEtude.map((t) => (
+                    <option key={t.code} value={t.code}>
+                      {t.libelle}
+                    </option>
+                  ))}
                 </select>
                 {errors.type && <span className="text-red-500 text-xs">Requis</span>}
               </div>
