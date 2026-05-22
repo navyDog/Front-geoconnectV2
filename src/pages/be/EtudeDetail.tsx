@@ -18,10 +18,12 @@ import {
 } from 'lucide-react';
 import { useEtudeDetail } from '../../hooks/useEtudeDetail';
 import { formatDateLong } from '../../lib/formatters';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function BEEtudeDetail() {
   const { id } = useParams<{ id: string }>();
   const { etude, isLoading, actionLoading, actionKey, error, withAction } = useEtudeDetail(id);
+  const { toastSuccess } = useToast();
 
   const [dateRenduPrevueInput, setDateRenduPrevueInput] = useState('');
   const [editingDateRenduPrevue, setEditingDateRenduPrevue] = useState(false);
@@ -157,8 +159,12 @@ export default function BEEtudeDetail() {
       renderActions={() => (
         <BEStepActions
           etat={etat}
+          dateIntervention={etude.dateIntervention}
           isLoading={interventionLoading}
-          onProposerDate={(date) => withAction(() => proposerDateIntervention(etude.id, date))}
+          onProposerDate={(date) => withAction(async () => {
+            await proposerDateIntervention(etude.id, date);
+            toastSuccess('Date d\'intervention proposée au client avec succès.');
+          })}
           onInterventionEffectuee={() => withAction(() => marquerInterventionEffectuee(etude.id))}
           onTerminerRapport={(rapportId) => withAction(() => terminerRapport(etude.id, rapportId))}
         />
@@ -204,13 +210,14 @@ function DaysRemainingBadge({ dateIso }: { dateIso: string }) {
 
 interface BEStepActionsProps {
   etat?: EtatEtude;
+  dateIntervention?: string;
   isLoading: boolean;
   onProposerDate: (date: string) => void;
   onInterventionEffectuee: () => void;
   onTerminerRapport: (rapportId: number) => void;
 }
 
-function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectuee, onTerminerRapport }: BEStepActionsProps) {
+function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onInterventionEffectuee, onTerminerRapport }: BEStepActionsProps) {
   const [dateInput, setDateInput] = useState('');
   const [rapportFile, setRapportFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -237,7 +244,9 @@ function BEStepActions({ etat, isLoading, onProposerDate, onInterventionEffectue
         <div className="space-y-3">
           {etat === 'DATE_INTERVENTION_PROPOSEE' && (
             <InfoMsg color="orange" icon={<Clock className="w-4 h-4" />}>
-              Le client n'a pas encore validé votre date. Vous pouvez en proposer une nouvelle.
+              {dateIntervention
+                ? "Le client n'a pas encore validé votre date. Vous pouvez en proposer une nouvelle."
+                : "Le client a refusé la date proposée. Veuillez en proposer une nouvelle."}
             </InfoMsg>
           )}
           <div className="flex flex-wrap gap-2 items-end">
