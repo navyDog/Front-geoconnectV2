@@ -9,18 +9,9 @@ import { useForm } from 'react-hook-form';
 import { createClient, getClientByUserId } from '../api/client';
 import { createDemandeDevis } from '../api/demandeDevis';
 import { uploadDocument } from '../api/document';
+import { useTypesEtude } from '../hooks/useTypesEtude';
 import { MapPin, Briefcase, Mail, Paperclip } from 'lucide-react';
-import { EnumValueDTO, TypeDemandeDevis } from '../types';
-
-const FALLBACK_TYPES: EnumValueDTO[] = [
-  { code: 'ASSAINISSEMENT', libelle: 'ASSAINISSEMENT — Assainissement' },
-  { code: 'G0',             libelle: 'G0 — Étude préalable' },
-  { code: 'G1_ES_PGC',      libelle: 'G1 ES PGC — Étude de site (PGC)' },
-  { code: 'G1_ELAN',        libelle: 'G1 ÉLAN — Étude de site (ÉLAN)' },
-  { code: 'G2_AVP',         libelle: 'G2 AVP — Avant-projet' },
-  { code: 'G2_PRO',         libelle: 'G2 PRO — Projet' },
-  { code: 'G5',             libelle: 'G5 — Diagnostic' },
-];
+import { TypeDemandeDevis } from '../types';
 
 export default function Home() {
   const [step, setStep] = useState(0);
@@ -60,9 +51,7 @@ function QuoteTunnel() {
   const [error, setError] = useState<string | null>(null);
   const [docFile, setDocFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Le tunnel est accessible sans authentification : on utilise directement la
-  // liste statique pour éviter un appel API non authentifié (→ 401 → redirect /login).
-  const typesEtude: EnumValueDTO[] = FALLBACK_TYPES;
+  const { typesEtude, loading: loadingTypes } = useTypesEtude();
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -187,9 +176,10 @@ function QuoteTunnel() {
                 <label className="block text-sm font-medium text-slate-700">Type de mission *</label>
                 <select
                   {...formRegister('type', { required: true })}
-                  className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={loadingTypes}
+                  className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 >
-                  <option value="">Sélectionnez un type</option>
+                  <option value="">{loadingTypes ? 'Chargement…' : 'Sélectionnez un type'}</option>
                   {typesEtude.map((t) => (
                     <option key={t.code} value={t.code}>
                       {t.libelle}
