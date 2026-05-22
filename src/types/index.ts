@@ -180,6 +180,24 @@ export interface EtudeDetailDTO {
   propositionDevis?: PropositionDevisDetail;
 }
 
+// ─── Référentiel ─────────────────────────────────────────────────────────────
+
+/** Département français (code INSEE + libellé). */
+export interface DepartementDTO {
+  code: string;
+  libelle: string;
+}
+
+// ─── Paramètres ───────────────────────────────────────────────────────────────
+
+/** Préférences de notification géographique d'un Bureau d'Études. */
+export interface NotificationPreferencesDTO {
+  /** true = reçoit toutes les demandes sans filtre (mode par défaut). */
+  notifierTousDepartements: boolean;
+  /** Codes des départements souscrits — pertinent uniquement si notifierTousDepartements = false. */
+  departementsSuivis: string[];
+}
+
 // ─── Notifications ────────────────────────────────────────────────────────────
 
 export type NotificationType =

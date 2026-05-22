@@ -3,10 +3,11 @@ import { useBEDashboardData } from '../../hooks/useBEDashboardData';
 import { useToast } from '../../contexts/ToastContext';
 import { STATUT_LABELS } from '../../constants/labels';
 import { formatDateShort } from '../../lib/formatters';
+import { extractCodeDepartement } from '../../lib/utils';
 import { DemandeDevisDTO, PropositionDevisDTO, EtudeDetailDTO } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Calendar, ChevronRight, FlaskConical, User, Clock, AlertCircle, Archive } from 'lucide-react';
+import { Calendar, ChevronRight, FlaskConical, User, Clock, AlertCircle, Archive, Globe } from 'lucide-react';
 import { beMustAct } from '../../components/etude/EtudeStatusBadge';
 import { EtudeCardHeader } from '../../components/etude/EtudeCardHeader';
 import { DashboardTabNav } from '../../components/ui/DashboardTabNav';
@@ -27,7 +28,7 @@ function EtudesGridEmptyState({ icon, text }: { icon: React.ReactNode; text: str
 
 export default function BEDashboard() {
   const { toastError } = useToast();
-  const { demandes, allPropositionsPerDemande, myPropositions, etudes, isLoading, error } = useBEDashboardData();
+  const { demandes, allPropositionsPerDemande, myPropositions, etudes, notificationPreferences, isLoading, error } = useBEDashboardData();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as TabType | null;
   const [activeTab, setActiveTab] = useState<TabType>(tabParam ?? 'OUVERT');
@@ -36,6 +37,19 @@ export default function BEDashboard() {
   useEffect(() => {
     if (tabParam) setActiveTab(tabParam);
   }, [tabParam]);
+
+  // Filtre par département : activé par défaut si le BE a des départements sélectionnés
+  const hasDepFilter =
+    notificationPreferences !== null &&
+    !notificationPreferences.notifierTousDepartements &&
+    notificationPreferences.departementsSuivis.length > 0;
+
+  const [filterByDept, setFilterByDept] = useState(false);
+
+  // Active le filtre automatiquement dès que les préférences sont chargées
+  useEffect(() => {
+    if (hasDepFilter) setFilterByDept(true);
+  }, [hasDepFilter]);
 
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab);
@@ -86,6 +100,20 @@ export default function BEDashboard() {
     const hasAccepted = props.some(p => p.statut === 'ACCEPTEE');
     return !myPropDemandeIds.has(d.id) && !hasAccepted;
   });
+
+  // Filtre géographique sur les missions disponibles
+  const filteredOpenDemandes = (() => {
+    if (!filterByDept || !notificationPreferences || notificationPreferences.notifierTousDepartements) {
+      return openDemandes;
+    }
+    const suivis = new Set(notificationPreferences.departementsSuivis);
+    return openDemandes.filter(d => {
+      const cp = d.adresseProjet?.codePostal;
+      const dept = extractCodeDepartement(cp);
+      // Si le CP est absent ou non décodable, on inclut la demande par sécurité
+      return dept === null || suivis.has(dept);
+    });
+  })();
 
   // "En attente" = mes offres EN_ATTENTE + mes offres REFUSÉE reproposables (pas d'acceptée sur la demande)
   const pendingItems = [...myActivePropPerDemande.entries()].filter(([demandeId, prop]) => {
@@ -249,18 +277,64 @@ export default function BEDashboard() {
         activeTab={activeTab}
         onTabChange={(id) => handleTabChange(id as TabType)}
         tabs={[
-          { id: 'OUVERT',         label: 'Missions Disponibles', count: openDemandes.length },
+          { id: 'OUVERT',         label: 'Missions Disponibles', count: filterByDept ? filteredOpenDemandes.length : openDemandes.length },
           { id: 'EN_ATTENTE',     label: 'En attente',           count: pendingItems.length },
           { id: 'ETUDE_EN_COURS', label: 'Études en cours',      count: etudesEnCours.length },
           { id: 'ARCHIVES',       label: 'Études archivées',      count: etudesArchivees.length },
         ]}
       />
 
+      {/* Toggle "Mes départements" — visible uniquement sur l'onglet Missions Disponibles */}
+      {activeTab === 'OUVERT' && hasDepFilter && (
+        <div className="flex items-center justify-between px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+          <label className="flex items-center gap-2.5 cursor-pointer select-none" aria-label="Filtrer les missions par mes départements">
+            <input
+              type="checkbox"
+              checked={filterByDept}
+              onChange={e => setFilterByDept(e.target.checked)}
+              className="w-4 h-4 accent-blue-600 cursor-pointer"
+            />
+            <span className="font-medium text-blue-800">
+              Filtrer par mes départements
+            </span>
+            {filterByDept && notificationPreferences && (
+              <span className="text-blue-600 text-xs">
+                ({notificationPreferences.departementsSuivis.length} département{notificationPreferences.departementsSuivis.length > 1 ? 's' : ''} suivis)
+              </span>
+            )}
+          </label>
+          {filterByDept && openDemandes.length > filteredOpenDemandes.length && (
+            <span className="text-xs text-blue-600 flex items-center gap-1">
+              <Globe className="w-3.5 h-3.5" aria-hidden="true" />
+              {openDemandes.length - filteredOpenDemandes.length} mission{openDemandes.length - filteredOpenDemandes.length > 1 ? 's' : ''} hors zone masquée{openDemandes.length - filteredOpenDemandes.length > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {activeTab === 'OUVERT' && (
-          openDemandes.length === 0
-            ? <div className="col-span-full py-12 text-center text-slate-500">Aucune nouvelle demande correspondante.</div>
-            : openDemandes.map(d => renderDemandeCard(d))
+          filteredOpenDemandes.length === 0
+            ? (
+              <div className="col-span-full py-12 text-center text-slate-500">
+                {filterByDept && openDemandes.length > 0
+                  ? (
+                    <div className="space-y-2">
+                      <p>Aucune mission disponible dans vos départements suivis.</p>
+                      <button
+                        type="button"
+                        onClick={() => setFilterByDept(false)}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        Voir toutes les missions ({openDemandes.length})
+                      </button>
+                    </div>
+                  )
+                  : <p>Aucune nouvelle demande correspondante.</p>
+                }
+              </div>
+            )
+            : filteredOpenDemandes.map(d => renderDemandeCard(d))
         )}
         {activeTab === 'EN_ATTENTE' && (
           pendingItems.length === 0

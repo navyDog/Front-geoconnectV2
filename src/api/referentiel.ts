@@ -1,5 +1,5 @@
 import api from './index';
-import { EnumValueDTO } from '../types';
+import { DepartementDTO, EnumValueDTO } from '../types';
 
 export { TYPES_ETUDE_FALLBACK } from '../constants/typesEtude';
 
@@ -10,5 +10,17 @@ export { TYPES_ETUDE_FALLBACK } from '../constants/typesEtude';
 export async function getTypesEtude(): Promise<EnumValueDTO[]> {
   const response = await api.get<EnumValueDTO[]>('/referentiel/types-etude');
   return response.data;
+}
+
+/**
+ * Récupère la liste des 101 départements français.
+ * GET /referentiel/departements  (endpoint public — pas de token requis)
+ *
+ * Données statiques côté back — à mettre en cache (staleTime: Infinity recommandé).
+ * Les codes Corse ("2A", "2B") sont des chaînes ; DOM-TOM sur 3 chiffres ("971"…).
+ */
+export async function getDepartements(): Promise<DepartementDTO[]> {
+  const { data } = await api.get<DepartementDTO[]>('/referentiel/departements');
+  return data;
 }
 
