@@ -13,7 +13,7 @@ import { useEtudeDetail } from '../../hooks/useEtudeDetail';
 
 export default function ClientEtudeDetail() {
   const { id } = useParams<{ id: string }>();
-  const { etude, isLoading, actionLoading, error, withAction } = useEtudeDetail(id);
+  const { etude, isLoading, actionLoading, actionKey, error, withAction } = useEtudeDetail(id);
 
   if (isLoading) return <EtudeDetailLoadingSpinner />;
   if (!etude) return <div className="text-center text-slate-500 py-12">Étude introuvable.</div>;
@@ -21,6 +21,10 @@ export default function ClientEtudeDetail() {
   const prop   = etude.propositionDevis;
   const bureau = prop?.bureauEtude;
   const etat   = etude.etat as EtatEtude | undefined;
+
+  // Loaders séparés : chacun ne se déclenche que pour son propre actionKey
+  const devisSigneLoading = actionLoading && actionKey === 'devisSigne';
+  const stepLoading       = actionLoading && actionKey !== 'devisSigne';
 
   /**
    * Colonne gauche : carte bureau + carte devis signé (persistante jusqu'au dépôt)
@@ -54,8 +58,8 @@ export default function ClientEtudeDetail() {
       {/* Carte devis signé — visible tant que le document n'est pas déposé */}
       <DevisSigneCard
         devisSigneId={etude.devisSigneId}
-        isLoading={actionLoading}
-        onUpload={(file) => withAction(() => uploaderDevisSigne(etude.id, file))}
+        isLoading={devisSigneLoading}
+        onUpload={(file) => withAction(() => uploaderDevisSigne(etude.id, file), 'devisSigne')}
       />
     </>
   );
@@ -84,7 +88,7 @@ export default function ClientEtudeDetail() {
         <ClientStepActions
           etat={etat}
           etude={etude}
-          isLoading={actionLoading}
+          isLoading={stepLoading}
           onValiderDate={() => withAction(() => validerDateIntervention(etude.id))}
           onRefuserDate={() => withAction(() => refuserDateIntervention(etude.id))}
           onConfirmerPaiement={() => withAction(() => confirmerPaiement(etude.id))}
@@ -107,7 +111,7 @@ interface DevisSigneCardProps {
  * - Tant que le devis signé n'est pas déposé : zone d'alerte avec upload.
  * - Une fois déposé : confirmation discrète verte.
  */
-function DevisSigneCard({ devisSigneId, isLoading, onUpload }: DevisSigneCardProps) {
+function DevisSigneCard({ devisSigneId, isLoading, onUpload }: Readonly<DevisSigneCardProps>) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -183,7 +187,7 @@ interface ClientStepActionsProps {
   onConfirmerPaiement: () => void;
 }
 
-function ClientStepActions({ etat, etude, isLoading, onValiderDate, onRefuserDate, onConfirmerPaiement }: ClientStepActionsProps) {
+function ClientStepActions({ etat, etude, isLoading, onValiderDate, onRefuserDate, onConfirmerPaiement }: Readonly<ClientStepActionsProps>) {
   const dateProposee = formatDateLong(etude.dateIntervention);
 
   switch (etat) {
