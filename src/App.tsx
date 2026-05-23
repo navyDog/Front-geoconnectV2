@@ -23,6 +23,7 @@ import BEDashboard from './pages/be/Dashboard';
 import BERequestDetail from './pages/be/RequestDetail';
 import BEEtudeDetail from './pages/be/EtudeDetail';
 import BERegister from './pages/be/BERegister';
+import BEParametresPage from './pages/be/ParametresPage';
 
 // Redirige automatiquement selon le rôle si connecté, sinon affiche Home
 function RootRedirect() {
@@ -60,6 +61,7 @@ export default function App() {
               <Route path="/be/dashboard" element={<BEDashboard />} />
               <Route path="/be/demande/:id" element={<BERequestDetail />} />
               <Route path="/be/etude/:id" element={<BEEtudeDetail />} />
+              <Route path="/be/parametres" element={<BEParametresPage />} />
             </Route>
             
             {/* Catch all */}

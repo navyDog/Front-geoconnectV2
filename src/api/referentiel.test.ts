@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getTypesEtude } from './referentiel';
+import { getTypesEtude, getDepartements } from './referentiel';
 
 vi.mock('./index', () => ({
   default: {
@@ -62,6 +62,76 @@ describe('getTypesEtude', () => {
     expect(result.map((t) => t.code)).toEqual([
       'ASSAINISSEMENT', 'G0', 'G1_ES_PGC', 'G1_ELAN', 'G2_AVP', 'G2_PRO', 'G5',
     ]);
+  });
+});
+
+// ─── getDepartements ──────────────────────────────────────────────────────────
+
+describe('getDepartements', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('appelle GET /referentiel/departements et retourne la liste', async () => {
+    const mockDepts = [
+      { code: '01', libelle: 'Ain' },
+      { code: '75', libelle: 'Paris' },
+      { code: '2A', libelle: 'Corse-du-Sud' },
+      { code: '971', libelle: 'Guadeloupe' },
+    ];
+    const { default: api } = await import('./index');
+    (api.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: mockDepts });
+
+    const result = await getDepartements();
+
+    expect(api.get).toHaveBeenCalledOnce();
+    expect(api.get).toHaveBeenCalledWith('/referentiel/departements');
+    expect(result).toEqual(mockDepts);
+  });
+
+  it('retourne un tableau vide si l\'API renvoie []', async () => {
+    const { default: api } = await import('./index');
+    (api.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: [] });
+
+    const result = await getDepartements();
+
+    expect(result).toEqual([]);
+  });
+
+  it('gère les codes Corse (2A, 2B) comme des chaînes', async () => {
+    const { default: api } = await import('./index');
+    const depts = [{ code: '2A', libelle: 'Corse-du-Sud' }, { code: '2B', libelle: 'Haute-Corse' }];
+    (api.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: depts });
+
+    const result = await getDepartements();
+
+    expect(result[0].code).toBe('2A');
+    expect(result[1].code).toBe('2B');
+  });
+
+  it('gère les codes DOM-TOM sur 3 chiffres', async () => {
+    const { default: api } = await import('./index');
+    const domTom = [
+      { code: '971', libelle: 'Guadeloupe' },
+      { code: '972', libelle: 'Martinique' },
+      { code: '973', libelle: 'Guyane' },
+      { code: '974', libelle: 'La Réunion' },
+      { code: '976', libelle: 'Mayotte' },
+    ];
+    (api.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ data: domTom });
+
+    const result = await getDepartements();
+
+    expect(result).toHaveLength(5);
+    expect(result.map((d) => d.code)).toContain('971');
+    expect(result.map((d) => d.code)).toContain('976');
+  });
+
+  it('laisse remonter l\'erreur si l\'API échoue', async () => {
+    const { default: api } = await import('./index');
+    (api.get as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network Error'));
+
+    await expect(getDepartements()).rejects.toThrow('Network Error');
   });
 });
 

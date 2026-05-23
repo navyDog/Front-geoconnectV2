@@ -20,7 +20,143 @@
       "bearerAuth": []
     }
   ],
+  "tags": [
+    {
+      "name": "Paramètres",
+      "description": "Gestion des paramètres personnels du Bureau d'Études"
+    }
+  ],
   "paths": {
+    "/parametres/me/notifications": {
+      "get": {
+        "tags": [
+          "Paramètres"
+        ],
+        "summary": "Lire les préférences de notification du BE connecté",
+        "operationId": "getPreferencesNotifications",
+        "responses": {
+          "200": {
+            "description": "Préférences de notification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Aucun bureau d'études lié à cet utilisateur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "Paramètres"
+        ],
+        "summary": "Mettre à jour les préférences de notification du BE connecté",
+        "operationId": "updatePreferencesNotifications",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesNotificationsRequestDTO"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Réservé au rôle BUREAU_ETUDE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Préférences mises à jour",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corps de la requête invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT absent, expiré ou invalide",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Aucun bureau d'études lié à cet utilisateur",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferencesNotificationsDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/demandeDevis": {
       "get": {
         "tags": [
@@ -108,14 +244,14 @@
           "200": {
             "description": "DemandeDevis mise à jour avec succès"
           },
-          "403": {
-            "description": "Réservé aux rôles ADMIN et CLIENT"
-          },
           "400": {
             "description": "Bad Request"
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
+          },
+          "403": {
+            "description": "Réservé à l'ADMIN ou au CLIENT propriétaire de la demande"
           }
         },
         "security": [
@@ -246,7 +382,7 @@
         },
         "responses": {
           "403": {
-            "description": "Réservé aux rôles ADMIN et CLIENT"
+            "description": "Réservé à l'ADMIN ou au CLIENT propriétaire du profil"
           },
           "400": {
             "description": "Bad Request"
@@ -414,7 +550,7 @@
         },
         "responses": {
           "403": {
-            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
+            "description": "Réservé à l'ADMIN ou au BUREAU_ETUDE propriétaire du profil"
           },
           "200": {
             "description": "Bureau d'étude mis à jour avec succès"
@@ -581,9 +717,6 @@
           "required": true
         },
         "responses": {
-          "403": {
-            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE"
-          },
           "200": {
             "description": "Proposition de devis créée avec succès"
           },
@@ -592,6 +725,9 @@
           },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
+          },
+          "403": {
+            "description": "Réservé aux rôles ADMIN et BUREAU_ETUDE (pour son propre bureau)"
           }
         },
         "security": [
@@ -957,14 +1093,14 @@
           "200": {
             "description": "Proposition refusée avec succès"
           },
-          "403": {
-            "description": "Réservé aux rôles ADMIN et CLIENT"
-          },
           "401": {
             "description": "Token JWT absent, expiré ou invalide"
           },
           "400": {
             "description": "Bad Request - Proposition déjà acceptée ou déjà refusée"
+          },
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT propriétaire de la demande"
           },
           "404": {
             "description": "Proposition de devis introuvable"
@@ -996,9 +1132,6 @@
           }
         ],
         "responses": {
-          "403": {
-            "description": "Réservé aux rôles ADMIN et CLIENT"
-          },
           "400": {
             "description": "Bad Request"
           },
@@ -1007,6 +1140,9 @@
           },
           "200": {
             "description": "Proposition acceptée, étude créée et autres propositions refusées"
+          },
+          "403": {
+            "description": "Réservé aux rôles ADMIN et CLIENT propriétaire de la demande"
           },
           "404": {
             "description": "Proposition de devis introuvable"
@@ -1470,26 +1606,32 @@
                 }
               }
             }
-          },
-          "401": {
-            "description": "Token JWT absent, expiré ou invalide",
+          }
+        }
+      }
+    },
+    "/referentiel/departements": {
+      "get": {
+        "tags": [
+          "referentiel-controller"
+        ],
+        "summary": "Liste des 101 départements français (métropole + DOM-TOM)",
+        "operationId": "getDepartements",
+        "responses": {
+          "200": {
+            "description": "Liste des départements",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/EnumValueDTO"
+                    "$ref": "#/components/schemas/DepartementDTO"
                   }
                 }
               }
             }
           }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
+        }
       }
     },
     "/propositionDevis/{id}": {
@@ -3088,6 +3230,39 @@
   },
   "components": {
     "schemas": {
+      "UpdatePreferencesNotificationsRequestDTO": {
+        "required": [
+          "notifierTousDepartements"
+        ],
+        "type": "object",
+        "properties": {
+          "notifierTousDepartements": {
+            "type": "boolean"
+          },
+          "departementsSuivis": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "PreferencesNotificationsDTO": {
+        "type": "object",
+        "properties": {
+          "notifierTousDepartements": {
+            "type": "boolean"
+          },
+          "departementsSuivis": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "AdresseDTO": {
         "type": "object",
         "properties": {
@@ -3442,6 +3617,17 @@
         }
       },
       "EnumValueDTO": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "libelle": {
+            "type": "string"
+          }
+        }
+      },
+      "DepartementDTO": {
         "type": "object",
         "properties": {
           "code": {

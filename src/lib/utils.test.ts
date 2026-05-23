@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cn } from './utils';
+import { cn, extractCodeDepartement } from './utils';
 
 describe('cn', () => {
   it('retourne une chaîne vide si aucun argument', () => {
@@ -15,7 +15,6 @@ describe('cn', () => {
   });
 
   it('fusionne les classes Tailwind contradictoires (tailwind-merge)', () => {
-    // p-2 et p-4 sont contradictoires : tailwind-merge garde le dernier
     expect(cn('p-2', 'p-4')).toBe('p-4');
   });
 
@@ -32,3 +31,104 @@ describe('cn', () => {
   });
 });
 
+// ─── extractCodeDepartement ───────────────────────────────────────────────────
+
+describe('extractCodeDepartement', () => {
+  // ── Cas invalides ────────────────────────────────────────────────────────────
+
+  it('retourne null pour une chaîne vide', () => {
+    expect(extractCodeDepartement('')).toBeNull();
+  });
+
+  it('retourne null pour null', () => {
+    expect(extractCodeDepartement(null)).toBeNull();
+  });
+
+  it('retourne null pour undefined', () => {
+    expect(extractCodeDepartement(undefined)).toBeNull();
+  });
+
+  it('retourne null pour un CP d\'un seul caractère', () => {
+    expect(extractCodeDepartement('7')).toBeNull();
+  });
+
+  // ── Métropole standard ───────────────────────────────────────────────────────
+
+  it('extrait "75" pour Paris (75000)', () => {
+    expect(extractCodeDepartement('75000')).toBe('75');
+  });
+
+  it('extrait "01" pour l\'Ain (01000)', () => {
+    expect(extractCodeDepartement('01000')).toBe('01');
+  });
+
+  it('extrait "92" pour les Hauts-de-Seine (92100)', () => {
+    expect(extractCodeDepartement('92100')).toBe('92');
+  });
+
+  it('extrait "33" pour la Gironde (33000)', () => {
+    expect(extractCodeDepartement('33000')).toBe('33');
+  });
+
+  it('extrait "69" pour le Rhône (69001)', () => {
+    expect(extractCodeDepartement('69001')).toBe('69');
+  });
+
+  // ── Corse ────────────────────────────────────────────────────────────────────
+
+  it('extrait "2A" pour Corse-du-Sud CP 20000', () => {
+    expect(extractCodeDepartement('20000')).toBe('2A');
+  });
+
+  it('extrait "2A" pour Corse-du-Sud CP 20100 (Ajaccio)', () => {
+    expect(extractCodeDepartement('20100')).toBe('2A');
+  });
+
+  it('extrait "2A" pour Corse-du-Sud CP 20190', () => {
+    expect(extractCodeDepartement('20190')).toBe('2A');
+  });
+
+  it('extrait "2B" pour Haute-Corse CP 20200 (Bastia)', () => {
+    expect(extractCodeDepartement('20200')).toBe('2B');
+  });
+
+  it('extrait "2B" pour Haute-Corse CP 20600', () => {
+    expect(extractCodeDepartement('20600')).toBe('2B');
+  });
+
+  // ── DOM-TOM ──────────────────────────────────────────────────────────────────
+
+  it('extrait "971" pour la Guadeloupe (97100)', () => {
+    expect(extractCodeDepartement('97100')).toBe('971');
+  });
+
+  it('extrait "972" pour la Martinique (97200)', () => {
+    expect(extractCodeDepartement('97200')).toBe('972');
+  });
+
+  it('extrait "973" pour la Guyane (97300)', () => {
+    expect(extractCodeDepartement('97300')).toBe('973');
+  });
+
+  it('extrait "974" pour La Réunion (97400)', () => {
+    expect(extractCodeDepartement('97400')).toBe('974');
+  });
+
+  it('extrait "976" pour Mayotte (97600)', () => {
+    expect(extractCodeDepartement('97600')).toBe('976');
+  });
+
+  it('extrait "975" pour Saint-Pierre-et-Miquelon (97500)', () => {
+    expect(extractCodeDepartement('97500')).toBe('975');
+  });
+
+  // ── Cohérence métropole proche du prefixe 97 ─────────────────────────────────
+
+  it('ne confond pas "79" (Deux-Sèvres) avec un DOM-TOM', () => {
+    expect(extractCodeDepartement('79000')).toBe('79');
+  });
+
+  it('CP de 2 chars exactement retourne les 2 chars', () => {
+    expect(extractCodeDepartement('97')).toBe('97');
+  });
+});

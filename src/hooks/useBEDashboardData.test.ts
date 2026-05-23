@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import React from 'react';
 import { useBEDashboardData } from './useBEDashboardData';
 import * as AuthContextModule from '../contexts/AuthContext';
@@ -20,16 +20,21 @@ vi.mock('../api/etude', () => ({
   getEtudeDetailById: vi.fn(),
   fetchEtudeDetails: vi.fn(),
 }));
+vi.mock('../api/parametres', () => ({
+  getNotificationPreferences: vi.fn(),
+}));
 
 import { getBureauByUserId } from '../api/bureauEtude';
 import { getAllDemandeDevis } from '../api/demandeDevis';
 import { getPropositionDevisByBureauId, getPropositionDevisByDemandeId } from '../api/propositionDevis';
 import { getEtudesByBureauId, fetchEtudeDetails } from '../api/etude';
+import { getNotificationPreferences } from '../api/parametres';
 
 const fakeBureau = { id: 10, raisonSociale: 'Bureau Test' };
 const fakeDemande = { id: 1, description: 'Demande 1' };
 const fakeProposition = { id: 5, bureauId: 10, demandeId: 1, statut: 'EN_ATTENTE' };
 const fakeEtude = { id: 20, etat: 'DEVIS_VALIDE' };
+const fakePrefs = { notifierTousDepartements: false, departementsSuivis: ['75', '92'] };
 
 function mockUseAuth(userId = 1) {
   vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
@@ -39,6 +44,17 @@ function mockUseAuth(userId = 1) {
     login: vi.fn(),
     logout: vi.fn(),
   });
+}
+
+/** Configure les mocks nominaux communs à la plupart des tests. */
+function mockNominal() {
+  (getBureauByUserId as any).mockResolvedValue(fakeBureau);
+  (getAllDemandeDevis as any).mockResolvedValue([fakeDemande]);
+  (getPropositionDevisByBureauId as any).mockResolvedValue([fakeProposition]);
+  (getPropositionDevisByDemandeId as any).mockResolvedValue([fakeProposition]);
+  (getEtudesByBureauId as any).mockResolvedValue([fakeEtude]);
+  (fetchEtudeDetails as any).mockResolvedValue([fakeEtude]);
+  (getNotificationPreferences as any).mockResolvedValue(fakePrefs);
 }
 
 describe('useBEDashboardData', () => {
@@ -64,12 +80,7 @@ describe('useBEDashboardData', () => {
 
   it('charge toutes les données en cas nominal', async () => {
     mockUseAuth();
-    (getBureauByUserId as any).mockResolvedValue(fakeBureau);
-    (getAllDemandeDevis as any).mockResolvedValue([fakeDemande]);
-    (getPropositionDevisByBureauId as any).mockResolvedValue([fakeProposition]);
-    (getPropositionDevisByDemandeId as any).mockResolvedValue([fakeProposition]);
-    (getEtudesByBureauId as any).mockResolvedValue([fakeEtude]);
-    (fetchEtudeDetails as any).mockResolvedValue([fakeEtude]);
+    mockNominal();
 
     const { result } = renderHook(() => useBEDashboardData());
 
@@ -80,6 +91,44 @@ describe('useBEDashboardData', () => {
     expect(result.current.myPropositions).toEqual([fakeProposition]);
     expect(result.current.etudes).toEqual([fakeEtude]);
     expect(result.current.error).toBeNull();
+  });
+
+  it('expose les préférences de notification chargées depuis l\'API', async () => {
+    mockUseAuth();
+    mockNominal();
+
+    const { result } = renderHook(() => useBEDashboardData());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.notificationPreferences).toEqual(fakePrefs);
+    expect(getNotificationPreferences).toHaveBeenCalledTimes(1);
+  });
+
+  it('notificationPreferences vaut null si l\'API échoue (catch silencieux)', async () => {
+    mockUseAuth();
+    mockNominal();
+    (getNotificationPreferences as any).mockRejectedValue(new Error('403'));
+
+    const { result } = renderHook(() => useBEDashboardData());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.notificationPreferences).toBeNull();
+    expect(result.current.error).toBeNull(); // l'échec des prefs ne plante pas le dashboard
+  });
+
+  it('expose notifierTousDepartements=true (mode par défaut d\'un nouveau BE)', async () => {
+    mockUseAuth();
+    mockNominal();
+    const allDepts = { notifierTousDepartements: true, departementsSuivis: [] };
+    (getNotificationPreferences as any).mockResolvedValue(allDepts);
+
+    const { result } = renderHook(() => useBEDashboardData());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.notificationPreferences?.notifierTousDepartements).toBe(true);
   });
 
   it('positionne error si getBureauByUserId rejette', async () => {
@@ -103,6 +152,7 @@ describe('useBEDashboardData', () => {
     (getPropositionDevisByDemandeId as any).mockRejectedValue(new Error('KO'));
     (getEtudesByBureauId as any).mockRejectedValue(new Error('KO'));
     (fetchEtudeDetails as any).mockResolvedValue([]);
+    (getNotificationPreferences as any).mockResolvedValue(fakePrefs);
 
     const { result } = renderHook(() => useBEDashboardData());
 
@@ -115,12 +165,7 @@ describe('useBEDashboardData', () => {
 
   it('refetch() redéclenche le chargement', async () => {
     mockUseAuth();
-    (getBureauByUserId as any).mockResolvedValue(fakeBureau);
-    (getAllDemandeDevis as any).mockResolvedValue([]);
-    (getPropositionDevisByBureauId as any).mockResolvedValue([]);
-    (getPropositionDevisByDemandeId as any).mockResolvedValue([]);
-    (getEtudesByBureauId as any).mockResolvedValue([]);
-    (fetchEtudeDetails as any).mockResolvedValue([]);
+    mockNominal();
 
     const { result, rerender } = renderHook(() => useBEDashboardData());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -128,7 +173,7 @@ describe('useBEDashboardData', () => {
     const callCountBefore = (getBureauByUserId as any).mock.calls.length;
 
     // Déclenche refetch puis attend un nouveau cycle complet
-    result.current.refetch();
+    act(() => { result.current.refetch(); });
     rerender();
 
     await waitFor(() => expect((getBureauByUserId as any).mock.calls.length).toBeGreaterThan(callCountBefore));

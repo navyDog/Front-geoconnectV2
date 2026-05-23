@@ -6,6 +6,7 @@ import { getClientByUserId } from '../../api/client';
 import { getBureauByUserId } from '../../api/bureauEtude';
 import { useNotifications } from '../../hooks/useNotifications';
 import { NotificationBell } from '../ui/NotificationBell';
+import { ParametresButton } from '../ui/ParametresButton';
 
 export default function MainLayout() {
   const { user, logout, isAuthenticated } = useAuth();
@@ -100,6 +101,9 @@ export default function MainLayout() {
                 <p className="text-xs font-bold leading-none">{identityLabel || roleLabel}</p>
                 <p className="text-[10px] text-slate-400">{user?.login} • {roleLabel}</p>
               </div>
+              {user?.role === 'BUREAU_ETUDE' && (
+                <ParametresButton to="/be/parametres" />
+              )}
               <NotificationBell
                 unreadCount={notifications.unreadCount}
                 notifications={notifications.notifications}

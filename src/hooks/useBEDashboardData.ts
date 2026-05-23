@@ -4,7 +4,8 @@ import { getBureauByUserId } from '../api/bureauEtude';
 import { getAllDemandeDevis } from '../api/demandeDevis';
 import { getPropositionDevisByBureauId, getPropositionDevisByDemandeId } from '../api/propositionDevis';
 import { getEtudesByBureauId, fetchEtudeDetails } from '../api/etude';
-import { BureauEtudesDTO, DemandeDevisDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../types';
+import { getNotificationPreferences } from '../api/parametres';
+import { BureauEtudesDTO, DemandeDevisDTO, NotificationPreferencesDTO, PropositionDevisDTO, EtudeDTO, EtudeDetailDTO } from '../types';
 import { extractErrorMessage } from '../lib/utils';
 
 interface BEDashboardData {
@@ -13,6 +14,8 @@ interface BEDashboardData {
   allPropositionsPerDemande: PropositionDevisDTO[][];
   myPropositions: PropositionDevisDTO[];
   etudes: EtudeDetailDTO[];
+  /** Préférences de notification géographique — null tant que non chargées. */
+  notificationPreferences: NotificationPreferencesDTO | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
@@ -25,6 +28,7 @@ export function useBEDashboardData(): BEDashboardData {
   const [allPropositionsPerDemande, setAllPropositionsPerDemande] = useState<PropositionDevisDTO[][]>([]);
   const [myPropositions, setMyPropositions] = useState<PropositionDevisDTO[]>([]);
   const [etudes, setEtudes] = useState<EtudeDetailDTO[]>([]);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferencesDTO | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
@@ -45,16 +49,18 @@ export function useBEDashboardData(): BEDashboardData {
 
         if (myBureau) setBureau(myBureau);
 
-        const [allDemandes, myProps, rawEtudes] = await Promise.all([
+        const [allDemandes, myProps, rawEtudes, prefs] = await Promise.all([
           getAllDemandeDevis(),
           myBureau?.id ? getPropositionDevisByBureauId(myBureau.id).catch((): PropositionDevisDTO[] => []) : Promise.resolve([] as PropositionDevisDTO[]),
           myBureau?.id ? getEtudesByBureauId(myBureau.id).catch((): EtudeDTO[] => []) : Promise.resolve([] as EtudeDTO[]),
+          getNotificationPreferences().catch(() => null),
         ]);
 
         if (cancelled) return;
 
         setDemandes(allDemandes || []);
         setMyPropositions(myProps || []);
+        setNotificationPreferences(prefs);
 
         const allProps = await Promise.all(
           (allDemandes || []).map(d => getPropositionDevisByDemandeId(d.id).catch((): PropositionDevisDTO[] => []))
@@ -79,6 +85,6 @@ export function useBEDashboardData(): BEDashboardData {
     return () => { cancelled = true; };
   }, [user, tick]);
 
-  return { bureau, demandes, allPropositionsPerDemande, myPropositions, etudes, isLoading, error, refetch };
+  return { bureau, demandes, allPropositionsPerDemande, myPropositions, etudes, notificationPreferences, isLoading, error, refetch };
 }
 
