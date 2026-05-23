@@ -122,3 +122,113 @@ describe('useEtudeDetail', () => {
   });
 });
 
+// ─── actionKey — isolation des loaders ───────────────────────────────────────
+
+describe('useEtudeDetail — actionKey', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('actionKey vaut null au repos', async () => {
+    (getEtudeDetailById as any).mockResolvedValue(fakeEtude);
+    const { result } = renderHook(() => useEtudeDetail('42'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.actionKey).toBeNull();
+  });
+
+  it('actionKey prend la valeur de la clé pendant l\'exécution de withAction', async () => {
+    (getEtudeDetailById as any).mockResolvedValue(fakeEtude);
+    const { result } = renderHook(() => useEtudeDetail('42'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Promesse bloquante : permet de vérifier l'état pendant que l'action tourne
+    let resolveAction!: () => void;
+    const action = vi.fn().mockReturnValue(
+      new Promise<void>(resolve => { resolveAction = resolve; }),
+    );
+
+    // Déclencher sans awaiter
+    act(() => { result.current.withAction(action, 'devisSigne'); });
+
+    // Après le 1er setState, React a re-rendu → actionKey doit être 'devisSigne'
+    await waitFor(() => expect(result.current.actionKey).toBe('devisSigne'));
+
+    // Débloquer l'action pour que le hook se termine proprement
+    resolveAction();
+    await waitFor(() => expect(result.current.actionKey).toBeNull());
+  });
+
+  it('actionKey est remis à null après la fin de withAction', async () => {
+    (getEtudeDetailById as any).mockResolvedValue(fakeEtude);
+    const { result } = renderHook(() => useEtudeDetail('42'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.withAction(vi.fn().mockResolvedValue(undefined), 'devisSigne');
+    });
+
+    expect(result.current.actionKey).toBeNull();
+    expect(result.current.actionLoading).toBe(false);
+  });
+
+  it('actionKey reste null quand withAction est appelé sans clé', async () => {
+    (getEtudeDetailById as any).mockResolvedValue(fakeEtude);
+    const { result } = renderHook(() => useEtudeDetail('42'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    let keyDuringAction: string | null = '__not_set__';
+
+    await act(async () => {
+      await result.current.withAction(vi.fn().mockImplementation(async () => {
+        keyDuringAction = result.current.actionKey;
+      }));
+    });
+
+    expect(keyDuringAction).toBeNull();
+  });
+
+  it('deux withAction avec des clés différentes positionnent actionKey distinctement', async () => {
+    (getEtudeDetailById as any).mockResolvedValue(fakeEtude);
+    const { result } = renderHook(() => useEtudeDetail('42'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Première action : clé 'devisSigne'
+    let resolve1!: () => void;
+    act(() => {
+      result.current.withAction(
+        vi.fn().mockReturnValue(new Promise<void>(r => { resolve1 = r; })),
+        'devisSigne',
+      );
+    });
+    await waitFor(() => expect(result.current.actionKey).toBe('devisSigne'));
+    resolve1();
+    await waitFor(() => expect(result.current.actionKey).toBeNull());
+
+    // Deuxième action : clé 'validerDate'
+    let resolve2!: () => void;
+    act(() => {
+      result.current.withAction(
+        vi.fn().mockReturnValue(new Promise<void>(r => { resolve2 = r; })),
+        'validerDate',
+      );
+    });
+    await waitFor(() => expect(result.current.actionKey).toBe('validerDate'));
+    resolve2();
+    await waitFor(() => expect(result.current.actionKey).toBeNull());
+  });
+
+  it('actionKey est remis à null même si l\'action échoue', async () => {
+    (getEtudeDetailById as any).mockResolvedValueOnce(fakeEtude);
+    const { result } = renderHook(() => useEtudeDetail('42'), { wrapper });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.withAction(
+        vi.fn().mockRejectedValue(new Error('échec')),
+        'devisSigne',
+      );
+    });
+
+    expect(result.current.actionKey).toBeNull();
+    expect(result.current.actionLoading).toBe(false);
+  });
+});
+

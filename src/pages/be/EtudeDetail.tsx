@@ -10,11 +10,12 @@ import { uploadDocument } from '../../api/document';
 import { EtatEtude } from '../../types';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { EtudeDetailLayout, EtudeDetailLoadingSpinner } from '../../components/etude/EtudeDetailLayout';
 import { InfoMsg } from '../../components/etude/InfoMsg';
 import { beMustAct } from '../../components/etude/EtudeStatusBadge';
 import {
-  CheckCircle2, Upload, AlertCircle, MapPin, Clock, User, Pencil,
+  CheckCircle2, Upload, AlertCircle, MapPin, Clock, User, Pencil, CalendarClock,
 } from 'lucide-react';
 import { useEtudeDetail } from '../../hooks/useEtudeDetail';
 import { formatDateLong } from '../../lib/formatters';
@@ -208,7 +209,7 @@ function DaysRemainingBadge({ dateIso }: { dateIso: string }) {
 
 // ─── Actions contextuelles BE ─────────────────────────────────────────────────
 
-interface BEStepActionsProps {
+export interface BEStepActionsProps {
   etat?: EtatEtude;
   dateIntervention?: string;
   isLoading: boolean;
@@ -217,11 +218,11 @@ interface BEStepActionsProps {
   onTerminerRapport: (rapportId: number) => void;
 }
 
-function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onInterventionEffectuee, onTerminerRapport }: BEStepActionsProps) {
+export function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onInterventionEffectuee, onTerminerRapport }: Readonly<BEStepActionsProps>) {
   const [dateInput, setDateInput] = useState('');
   const [rapportFile, setRapportFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-
+  const [showInterventionModal, setShowInterventionModal] = useState(false);
 
   const handleTerminerRapport = async () => {
     if (!rapportFile) return;
@@ -234,8 +235,34 @@ function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onIn
     }
   };
 
-
   const today = new Date().toISOString().split('T')[0];
+
+  // Calcul de l'écart entre aujourd'hui et la date d'intervention prévue
+  const interventionDaysRemaining = (() => {
+    if (!dateIntervention) return null;
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    const target = new Date(dateIntervention);
+    target.setHours(0, 0, 0, 0);
+    return Math.round((target.getTime() - todayDate.getTime()) / 86_400_000);
+  })();
+
+  const interventionIsFuture = interventionDaysRemaining !== null && interventionDaysRemaining > 0;
+
+  // Contenu du bandeau d'avertissement affiché dans la modale si la date n'est pas encore atteinte
+  const interventionWarning = interventionIsFuture ? (
+    <div className="flex items-start gap-2 rounded-lg bg-orange-50 border border-orange-200 p-3 text-xs text-orange-800">
+      <CalendarClock className="w-4 h-4 shrink-0 mt-0.5 text-orange-500" />
+      <span>
+        La date d'intervention est prévue au{' '}
+        <strong>{formatDateLong(dateIntervention)}</strong>, dans{' '}
+        <strong>
+          {interventionDaysRemaining} jour{interventionDaysRemaining > 1 ? 's' : ''}
+        </strong>
+        . Confirmez uniquement si l'intervention a bien été réalisée par anticipation.
+      </span>
+    </div>
+  ) : null;
 
   switch (etat) {
     case 'DEVIS_VALIDE':
@@ -272,10 +299,27 @@ function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onIn
     case 'DATE_INTERVENTION_FIXEE':
       return (
         <div className="space-y-3">
-          <Button onClick={onInterventionEffectuee} isLoading={isLoading}>
+          <Button onClick={() => setShowInterventionModal(true)} isLoading={isLoading}>
             <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-            Marquer l'intervention effectuée
+            Intervention réalisée
           </Button>
+
+          {showInterventionModal && (
+            <ConfirmModal
+              title="Confirmer l'intervention"
+              message="Êtes-vous sûr de vouloir marquer cette intervention comme réalisée ? Cette action est irréversible."
+              confirmLabel="Oui, marquer comme effectuée"
+              cancelLabel="Annuler"
+              variant={interventionIsFuture ? 'warning' : 'default'}
+              extra={interventionWarning}
+              isLoading={isLoading}
+              onConfirm={() => {
+                setShowInterventionModal(false);
+                onInterventionEffectuee();
+              }}
+              onCancel={() => setShowInterventionModal(false)}
+            />
+          )}
         </div>
       );
 
