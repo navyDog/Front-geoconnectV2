@@ -19,6 +19,7 @@ import {
 import { useEtudeDetail } from '../../hooks/useEtudeDetail';
 import { formatDateLong } from '../../lib/formatters';
 import { useToast } from '../../contexts/ToastContext';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 export default function BEEtudeDetail() {
   const { id } = useParams<{ id: string }>();
@@ -221,6 +222,7 @@ function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onIn
   const [dateInput, setDateInput] = useState('');
   const [rapportFile, setRapportFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
 
   const handleTerminerRapport = async () => {
@@ -234,6 +236,19 @@ function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onIn
     }
   };
 
+  const getWarningMessage = (): string | undefined => {
+    if (!dateIntervention) return undefined;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const interventionDate = new Date(dateIntervention);
+    interventionDate.setHours(0, 0, 0, 0);
+
+    if (interventionDate > today) {
+      const diffDays = Math.ceil((interventionDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return `Attention : la date d'intervention prévue est dans ${diffDays} jour${diffDays > 1 ? 's' : ''} (${formatDateLong(dateIntervention)}). Confirmez-vous que l'intervention a bien été effectuée ?`;
+    }
+    return undefined;
+  };
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -271,12 +286,29 @@ function BEStepActions({ etat, dateIntervention, isLoading, onProposerDate, onIn
 
     case 'DATE_INTERVENTION_FIXEE':
       return (
-        <div className="space-y-3">
-          <Button onClick={onInterventionEffectuee} isLoading={isLoading}>
-            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-            Marquer l'intervention effectuée
-          </Button>
-        </div>
+        <>
+          <div className="space-y-3">
+            <Button onClick={() => setShowConfirmModal(true)} isLoading={isLoading}>
+              <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+              Marquer l'intervention effectuée
+            </Button>
+          </div>
+          {showConfirmModal && (
+            <ConfirmModal
+              title="Confirmer l'intervention effectuée"
+              message="Confirmez-vous que l'intervention a été réalisée ?"
+              warningMessage={getWarningMessage()}
+              confirmLabel="Confirmer"
+              cancelLabel="Annuler"
+              isLoading={isLoading}
+              onConfirm={() => {
+                setShowConfirmModal(false);
+                onInterventionEffectuee();
+              }}
+              onCancel={() => setShowConfirmModal(false)}
+            />
+          )}
+        </>
       );
 
     case 'INTERVENTION_EFFECTUEE':
