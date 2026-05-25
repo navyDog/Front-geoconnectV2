@@ -92,22 +92,32 @@ function OfferForm({ isResubmit, isSubmitting, register, errors, pdfFile, fileIn
             label="PRIX D'INTERVENTION (€ HT) *"
             type="number"
             step="0.01"
+            min="0.01"
             placeholder="Ex: 4200"
-            {...register('prix', { required: true })}
-            error={(errors as Record<string, { message?: string }>).prix ? 'Requis' : undefined}
+            {...register('prix', { required: true, min: { value: 0.01, message: 'Doit être > 0' } })}
+            error={(errors as Record<string, { message?: string }>).prix
+              ? ((errors as Record<string, { message?: string }>).prix?.message ?? 'Requis')
+              : undefined}
           />
           <Input
             label="DÉLAI RENDU (semaines) *"
             type="number"
+            min="1"
             placeholder="Ex: 4"
-            {...register('delaiMaxRendu', { required: true })}
-            error={(errors as Record<string, { message?: string }>).delaiMaxRendu ? 'Requis' : undefined}
+            {...register('delaiMaxRendu', { required: true, min: { value: 1, message: 'Minimum 1 semaine' } })}
+            error={(errors as Record<string, { message?: string }>).delaiMaxRendu
+              ? ((errors as Record<string, { message?: string }>).delaiMaxRendu?.message ?? 'Requis')
+              : undefined}
           />
           <Input
-            label="DÉLAI INTERVENTION (semaines, optionnel)"
+            label="DÉLAI INTERVENTION (semaines) *"
             type="number"
+            min="1"
             placeholder="Ex: 2"
-            {...register('delaiMaxIntervention')}
+            {...register('delaiMaxIntervention', { required: true, min: { value: 1, message: 'Minimum 1 semaine' } })}
+            error={(errors as Record<string, { message?: string }>).delaiMaxIntervention
+              ? ((errors as Record<string, { message?: string }>).delaiMaxIntervention?.message ?? 'Requis')
+              : undefined}
           />
           <div>
             <label htmlFor="pdf-upload" className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">

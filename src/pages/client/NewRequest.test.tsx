@@ -139,6 +139,7 @@ describe('NewRequest — soumission du formulaire', () => {
 
     // Remplir les champs requis
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -161,6 +162,7 @@ describe('NewRequest — soumission du formulaire', () => {
     await waitFor(() => screen.getByText('G0 — Étude préalable'));
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -190,6 +192,7 @@ describe('NewRequest — soumission du formulaire', () => {
     await waitFor(() => screen.getByText('G2 PRO — Projet'));
 
     await user.selectOptions(screen.getByRole('combobox'), 'G2_PRO');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '5 Boulevard Haussmann');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '69000');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Lyon');
 
@@ -209,6 +212,7 @@ describe('NewRequest — soumission du formulaire', () => {
     await waitFor(() => screen.getByText('G0 — Étude préalable'));
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -229,6 +233,7 @@ describe('NewRequest — soumission du formulaire', () => {
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
     await user.type(screen.getByPlaceholderText('Ex : AB 0042'), 'AB 0042');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -259,6 +264,7 @@ describe('NewRequest — soumission du formulaire', () => {
     await user.type(inputs[1], 'CD 0099');
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -278,6 +284,7 @@ describe('NewRequest — soumission du formulaire', () => {
     await waitFor(() => screen.getByText('G0 — Étude préalable'));
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -303,6 +310,7 @@ describe('NewRequest — soumission du formulaire', () => {
     await user.upload(fileInput, file);
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -341,6 +349,7 @@ describe('NewRequest — champ délai maximum souhaité (semaines)', () => {
     await waitFor(() => screen.getByText('G0 — Étude préalable'));
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
     await user.type(screen.getByPlaceholderText('Ex : 8'), '6');
@@ -361,6 +370,7 @@ describe('NewRequest — champ délai maximum souhaité (semaines)', () => {
     await waitFor(() => screen.getByText('G0 — Étude préalable'));
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
     // champ délai non renseigné
@@ -380,6 +390,7 @@ describe('NewRequest — champ délai maximum souhaité (semaines)', () => {
     await waitFor(() => screen.getByText('G0 — Étude préalable'));
 
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
 
@@ -472,6 +483,7 @@ describe('NewRequest — références cadastrales dynamiques', () => {
     // Remplir les champs requis et soumettre
     await waitFor(() => screen.getByText('G0 — Étude préalable'));
     await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
     await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
     await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
     await user.click(screen.getByRole('button', { name: /créer la demande/i }));
@@ -483,3 +495,185 @@ describe('NewRequest — références cadastrales dynamiques', () => {
     });
   });
 });
+
+// ─── Validation des champs obligatoires ───────────────────────────────────────
+
+describe('NewRequest — validation des champs obligatoires', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (referentielApi.getTypesEtude as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TYPES);
+    (clientApi.getClientByUserId as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_CLIENT);
+    (demandeDevisApi.createDemandeDevis as ReturnType<typeof vi.fn>).mockResolvedValue({});
+  });
+
+  it('n\'appelle pas createDemandeDevis si le type n\'est pas sélectionné', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    // Remplir tout sauf le type
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Ce champ est requis')).toBeTruthy();
+    });
+    expect(demandeDevisApi.createDemandeDevis).not.toHaveBeenCalled();
+  });
+
+  it('n\'appelle pas createDemandeDevis si la rue est vide', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    // Rue non renseignée
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).not.toHaveBeenCalled();
+    });
+  });
+
+  it('n\'appelle pas createDemandeDevis si la ville est vide', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75001');
+    // Ville non renseignée
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).not.toHaveBeenCalled();
+    });
+  });
+
+  it('envoie l\'adresse du projet dans la charge utile', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '42 Rue Oberkampf');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '75011');
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).toHaveBeenCalledWith(
+        expect.objectContaining({
+          adresseProjet: { rue: '42 Rue Oberkampf', codePostal: '75011', ville: 'Paris' },
+        })
+      );
+    });
+  });
+});
+
+describe('NewRequest — validation du code postal', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (referentielApi.getTypesEtude as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_TYPES);
+    (clientApi.getClientByUserId as ReturnType<typeof vi.fn>).mockResolvedValue(MOCK_CLIENT);
+    (demandeDevisApi.createDemandeDevis as ReturnType<typeof vi.fn>).mockResolvedValue({});
+  });
+
+  it('affiche "Requis" si le code postal est vide', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
+    // Code postal non renseigné
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Requis')).toBeTruthy();
+    });
+    expect(demandeDevisApi.createDemandeDevis).not.toHaveBeenCalled();
+  });
+
+  it('affiche "5 chiffres requis" si le code postal ne fait pas 5 chiffres', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '750'); // invalide
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('5 chiffres requis')).toBeTruthy();
+    });
+    expect(demandeDevisApi.createDemandeDevis).not.toHaveBeenCalled();
+  });
+
+  it('affiche une erreur si le code postal contient des lettres', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), 'ABCDE'); // invalide
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('5 chiffres requis')).toBeTruthy();
+    });
+    expect(demandeDevisApi.createDemandeDevis).not.toHaveBeenCalled();
+  });
+
+  it('n\'appelle pas createDemandeDevis si le code postal est vide', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
+    // Code postal non renseigné
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Paris');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).not.toHaveBeenCalled();
+    });
+  });
+
+  it('accepte un code postal valide à 5 chiffres et soumet', async () => {
+    const user = userEvent.setup();
+    renderNewRequest();
+
+    await waitFor(() => screen.getByText('G0 — Étude préalable'));
+
+    await user.selectOptions(screen.getByRole('combobox'), 'G0');
+    await user.type(screen.getByPlaceholderText(/15 Avenue des Champs/i), '10 Rue de la Paix');
+    await user.type(screen.getByPlaceholderText('Ex : 75001'), '13001'); // valide
+    await user.type(screen.getByPlaceholderText('Ex : Paris'), 'Marseille');
+    await user.click(screen.getByRole('button', { name: /créer la demande/i }));
+
+    await waitFor(() => {
+      expect(demandeDevisApi.createDemandeDevis).toHaveBeenCalledOnce();
+    });
+  });
+});
+

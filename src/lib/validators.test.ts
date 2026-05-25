@@ -1,0 +1,127 @@
+import { describe, it, expect } from 'vitest';
+import { CODE_POSTAL_PATTERN, PHONE_FR_PATTERN, codePostalRules, phoneRules } from './validators';
+
+// ─── CODE POSTAL ──────────────────────────────────────────────────────────────
+
+describe('CODE_POSTAL_PATTERN', () => {
+  it('accepte un code postal valide à 5 chiffres', () => {
+    expect(CODE_POSTAL_PATTERN.test('75001')).toBe(true);
+    expect(CODE_POSTAL_PATTERN.test('13100')).toBe(true);
+    expect(CODE_POSTAL_PATTERN.test('06000')).toBe(true);
+  });
+
+  it('refuse moins de 5 chiffres', () => {
+    expect(CODE_POSTAL_PATTERN.test('7500')).toBe(false);
+    expect(CODE_POSTAL_PATTERN.test('750')).toBe(false);
+    expect(CODE_POSTAL_PATTERN.test('7')).toBe(false);
+  });
+
+  it('refuse plus de 5 chiffres', () => {
+    expect(CODE_POSTAL_PATTERN.test('750011')).toBe(false);
+    expect(CODE_POSTAL_PATTERN.test('123456')).toBe(false);
+  });
+
+  it('refuse des lettres', () => {
+    expect(CODE_POSTAL_PATTERN.test('ABCDE')).toBe(false);
+    expect(CODE_POSTAL_PATTERN.test('7500A')).toBe(false);
+  });
+
+  it('refuse une chaîne vide', () => {
+    expect(CODE_POSTAL_PATTERN.test('')).toBe(false);
+  });
+
+  it('refuse des espaces', () => {
+    expect(CODE_POSTAL_PATTERN.test('750 1')).toBe(false);
+    expect(CODE_POSTAL_PATTERN.test(' 75001')).toBe(false);
+  });
+});
+
+// ─── TÉLÉPHONE ────────────────────────────────────────────────────────────────
+
+describe('PHONE_FR_PATTERN', () => {
+  describe('format national (sans séparateurs)', () => {
+    it('accepte un numéro mobile valide', () => {
+      expect(PHONE_FR_PATTERN.test('0612345678')).toBe(true);
+      expect(PHONE_FR_PATTERN.test('0712345678')).toBe(true);
+    });
+
+    it('accepte un numéro fixe valide', () => {
+      expect(PHONE_FR_PATTERN.test('0123456789')).toBe(true);
+      expect(PHONE_FR_PATTERN.test('0456789012')).toBe(true);
+    });
+  });
+
+  describe('format national avec séparateurs', () => {
+    it('accepte les espaces comme séparateurs', () => {
+      expect(PHONE_FR_PATTERN.test('06 12 34 56 78')).toBe(true);
+      expect(PHONE_FR_PATTERN.test('01 23 45 67 89')).toBe(true);
+    });
+
+    it('accepte les points comme séparateurs', () => {
+      expect(PHONE_FR_PATTERN.test('06.12.34.56.78')).toBe(true);
+    });
+
+    it('accepte les tirets comme séparateurs', () => {
+      expect(PHONE_FR_PATTERN.test('06-12-34-56-78')).toBe(true);
+    });
+  });
+
+  describe('format international +33', () => {
+    it('accepte le format +33 sans séparateur', () => {
+      expect(PHONE_FR_PATTERN.test('+33612345678')).toBe(true);
+      expect(PHONE_FR_PATTERN.test('+33123456789')).toBe(true);
+    });
+
+    it('accepte le format 0033', () => {
+      expect(PHONE_FR_PATTERN.test('0033612345678')).toBe(true);
+    });
+  });
+
+  describe('formats invalides', () => {
+    it('refuse un numéro commençant par 00 (sauf 0033)', () => {
+      expect(PHONE_FR_PATTERN.test('00123456789')).toBe(false);
+    });
+
+    it('refuse un numéro trop court', () => {
+      expect(PHONE_FR_PATTERN.test('061234567')).toBe(false);
+      expect(PHONE_FR_PATTERN.test('0612')).toBe(false);
+    });
+
+    it('refuse un numéro trop long', () => {
+      expect(PHONE_FR_PATTERN.test('06123456789')).toBe(false);
+    });
+
+    it('refuse des lettres', () => {
+      expect(PHONE_FR_PATTERN.test('06ABCDEFGH')).toBe(false);
+    });
+
+    it('refuse une chaîne vide', () => {
+      expect(PHONE_FR_PATTERN.test('')).toBe(false);
+    });
+  });
+});
+
+// ─── Règles react-hook-form ────────────────────────────────────────────────────
+
+describe('codePostalRules', () => {
+  it('contient une règle required avec message', () => {
+    expect(codePostalRules.required).toBe('Requis');
+  });
+
+  it('contient un pattern correspondant à CODE_POSTAL_PATTERN', () => {
+    expect(codePostalRules.pattern.value).toBe(CODE_POSTAL_PATTERN);
+    expect(codePostalRules.pattern.message).toBe('5 chiffres requis');
+  });
+});
+
+describe('phoneRules', () => {
+  it('contient une règle required avec message', () => {
+    expect(phoneRules.required).toBe('Requis');
+  });
+
+  it('contient un pattern correspondant à PHONE_FR_PATTERN', () => {
+    expect(phoneRules.pattern.value).toBe(PHONE_FR_PATTERN);
+    expect(typeof phoneRules.pattern.message).toBe('string');
+  });
+});
+

@@ -12,6 +12,7 @@ import { uploadDocument } from '../api/document';
 import { useTypesEtude } from '../hooks/useTypesEtude';
 import { MapPin, Briefcase, Mail, Paperclip } from 'lucide-react';
 import { TypeDemandeDevis } from '../types';
+import { codePostalRules, phoneRules } from '../lib/validators';
 
 export default function Home() {
   const [step, setStep] = useState(0);
@@ -82,14 +83,14 @@ function QuoteTunnel() {
 
       // 2. Create Client Profile
       let client = await createClient({
-        civilite: data.civilite || undefined,
+        civilite: data.civilite,
         nom: data.nom,
         prenom: data.prenom,
         emailContact: data.login,
-        telContact: data.telContact || undefined,
+        telContact: data.telContact,
         utilisateurId: authRes.userId,
         adresseFacturation: {
-          rue: data.rue || 'Non renseigné',
+          rue: data.rue,
           ville: data.ville,
           codePostal: data.codePostal,
         },
@@ -123,7 +124,7 @@ function QuoteTunnel() {
         superficie: data.superficie ? Number(data.superficie) : undefined,
         docsDevisId,
         adresseProjet: {
-          rue: data.rueProjet || 'Non renseigné',
+          rue: data.rueProjet,
           codePostal: data.codePostalProjet || data.codePostal,
           ville: data.villeProjet || data.ville,
         },
@@ -191,16 +192,17 @@ function QuoteTunnel() {
 
               {/* Adresse du projet */}
               <Input
-                label="Rue du projet"
+                label="Rue du projet *"
                 placeholder="Ex : 15 Avenue des Champs-Élysées"
-                {...formRegister('rueProjet')}
+                {...formRegister('rueProjet', { required: true })}
+                error={errors.rueProjet ? 'Requis' : undefined}
               />
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Code Postal *"
                   placeholder="Ex : 75001"
-                  {...formRegister('codePostalProjet', { required: true })}
-                  error={errors.codePostalProjet ? 'Requis' : undefined}
+                  {...formRegister('codePostalProjet', codePostalRules)}
+                  error={errors.codePostalProjet ? (errors.codePostalProjet as { message?: string }).message : undefined}
                 />
                 <Input
                   label="Ville *"
@@ -317,9 +319,9 @@ function QuoteTunnel() {
               )}
               {/* Civilité */}
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-700">Civilité</label>
+                <label className="block text-sm font-medium text-slate-700">Civilité *</label>
                 <select
-                  {...formRegister('civilite')}
+                  {...formRegister('civilite', { required: true })}
                   className="w-full flex h-10 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">—</option>
@@ -327,6 +329,7 @@ function QuoteTunnel() {
                   <option value="MME">Mme</option>
                   <option value="AUTRE">Autre</option>
                 </select>
+                {errors.civilite && <span className="text-red-500 text-xs">Requis</span>}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Input
@@ -341,10 +344,11 @@ function QuoteTunnel() {
                 />
               </div>
               <Input
-                label="Téléphone"
+                label="Téléphone *"
                 type="tel"
                 placeholder="06 00 00 00 00"
-                {...formRegister('telContact')}
+                {...formRegister('telContact', phoneRules)}
+                error={errors.telContact ? (errors.telContact.message as string ?? 'Requis') : undefined}
               />
               <Input
                 label="Rue (adresse de facturation) *"
@@ -355,8 +359,8 @@ function QuoteTunnel() {
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Code Postal *"
-                  {...formRegister('codePostal', { required: true })}
-                  error={errors.codePostal ? 'Requis' : undefined}
+                  {...formRegister('codePostal', codePostalRules)}
+                  error={errors.codePostal ? (errors.codePostal as { message?: string }).message : undefined}
                 />
                 <Input
                   label="Ville *"

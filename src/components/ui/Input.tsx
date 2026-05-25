@@ -7,16 +7,19 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, label, error, ...props }, ref) => {
+  ({ className, type, label, error, id, name, ...props }, ref) => {
+    const inputId = id ?? name;
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+          <label htmlFor={inputId} className="block text-[11px] font-semibold text-slate-700 mb-1">
             {label}
             {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
         <input
+          id={inputId}
+          name={name}
           type={type}
           className={cn(
             "flex h-9 w-full rounded border border-slate-300 bg-white px-3 py-1.5 text-xs placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 disabled:cursor-not-allowed disabled:bg-slate-50",
