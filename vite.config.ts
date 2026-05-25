@@ -1,6 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
+import path from 'node:path';
 import {defineConfig, loadEnv} from 'vite';
 /// <reference types="vitest" />
 
@@ -27,22 +27,12 @@ export default defineConfig(({mode}) => {
         // Le hook proxyReq convertit le cookie temporaire pdf_token en header
         // Authorization: Bearer, ce qui permet à window.open() d'accéder aux
         // endpoints sécurisés sans exposer le JWT dans l'URL.
+        // Toutes les requêtes /api/* sont transmises au backend Spring Boot.
+        // Le cookie HttpOnly jwt est transmis automatiquement par le navigateur —
+        // aucun hook proxyReq nécessaire depuis la migration vers les cookies.
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:8080',
           changeOrigin: true,
-          configure: (proxy) => {
-            proxy.on('proxyReq', (proxyReq, req, _res) => {
-              // Uniquement si la requête n'a pas déjà un header Authorization
-              // (les appels axios le posent eux-mêmes, window.open ne le fait pas)
-              if (!proxyReq.getHeader('Authorization')) {
-                const cookies = (req.headers.cookie as string) ?? '';
-                const match = cookies.match(/pdf_token=([^;]+)/);
-                if (match) {
-                  proxyReq.setHeader('Authorization', `Bearer ${match[1]}`);
-                }
-              }
-            });
-          },
         },
       },
     },

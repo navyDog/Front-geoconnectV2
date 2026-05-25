@@ -109,7 +109,8 @@ export interface DocumentDTO {
 }
 
 export interface AuthResponseDTO {
-  token: string;
+  /** @deprecated Le JWT est désormais posé en cookie HttpOnly par le backend — absent du body. */
+  token?: string;
   userId: number;
   login: string;
   role: 'CLIENT' | 'BUREAU_ETUDE' | 'ADMIN';
@@ -202,6 +203,7 @@ export interface NotificationPreferencesDTO {
 
 export type NotificationType =
   | 'NOUVELLE_DEMANDE_DEVIS'
+  | 'DEVIS_SIGNE_UPLOADE'
   | 'PROPOSITION_ACCEPTEE'
   | 'DATE_INTERVENTION_VALIDEE'
   | 'DATE_INTERVENTION_REFUSEE'

@@ -46,7 +46,7 @@
             }
           },
           "403": {
-            "description": "Réservé au rôle BUREAU_ETUDE",
+            "description": "Réservé au rôle BUREAU_ETUDE possédant un profil bureau",
             "content": {
               "application/json": {
                 "schema": {
@@ -100,7 +100,7 @@
         },
         "responses": {
           "403": {
-            "description": "Réservé au rôle BUREAU_ETUDE",
+            "description": "Réservé au rôle BUREAU_ETUDE possédant un profil bureau",
             "content": {
               "application/json": {
                 "schema": {
@@ -3264,6 +3264,11 @@
         }
       },
       "AdresseDTO": {
+        "required": [
+          "codePostal",
+          "rue",
+          "ville"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -3274,6 +3279,7 @@
             "type": "string"
           },
           "codePostal": {
+            "pattern": "\\d{5}",
             "type": "string"
           },
           "ville": {
@@ -3282,6 +3288,11 @@
         }
       },
       "DemandeDevisDTO": {
+        "required": [
+          "adresseProjet",
+          "clientId",
+          "type"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -3335,6 +3346,14 @@
         }
       },
       "ClientDTO": {
+        "required": [
+          "adresseFacturation",
+          "civilite",
+          "emailContact",
+          "nom",
+          "prenom",
+          "telContact"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -3371,6 +3390,12 @@
         }
       },
       "BureauEtudesDTO": {
+        "required": [
+          "adresse",
+          "emailContact",
+          "raisonSociale",
+          "telContact"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -3396,6 +3421,13 @@
         }
       },
       "PropositionDevisDTO": {
+        "required": [
+          "bureauEtudeId",
+          "delaiMaxIntervention",
+          "delaiMaxRendu",
+          "demandeDevisId",
+          "prix"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -3419,6 +3451,8 @@
             "format": "int64"
           },
           "prix": {
+            "minimum": 0.01,
+            "exclusiveMinimum": false,
             "type": "number"
           },
           "documentId": {

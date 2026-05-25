@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { TypeDemandeDevis } from '../../types';
+import { codePostalRules } from '../../lib/validators';
 
 export default function NewRequest() {
   const navigate = useNavigate();
@@ -52,7 +53,7 @@ export default function NewRequest() {
         superficie: data.superficie ? Number(data.superficie) : undefined,
         docsDevisId,
         adresseProjet: {
-          rue: data.rueProjet || 'Non renseigné',
+          rue: data.rueProjet,
           codePostal: data.codePostal,
           ville: data.ville,
         },
@@ -182,15 +183,16 @@ export default function NewRequest() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input
-                  label="Rue"
+                  label="Rue *"
                   placeholder="Ex : 15 Avenue des Champs-Élysées"
-                  {...formRegister('rueProjet')}
+                  {...formRegister('rueProjet', { required: true })}
+                  error={errors.rueProjet ? 'Requis' : undefined}
                 />
                 <Input
                   label="Code Postal *"
                   placeholder="Ex : 75001"
-                  {...formRegister('codePostal', { required: true })}
-                  error={errors.codePostal ? 'Requis' : undefined}
+                  {...formRegister('codePostal', codePostalRules)}
+                  error={errors.codePostal ? (errors.codePostal as { message?: string }).message : undefined}
                 />
                 <Input
                   label="Ville *"

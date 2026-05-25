@@ -5,6 +5,7 @@ import { registerCall } from '../../api/auth';
 import { createBureauEtude } from '../../api/bureauEtude';
 import { useAuth } from '../../contexts/AuthContext';
 import { Building2, FileText, Upload } from 'lucide-react';
+import { codePostalRules, phoneRules } from '../../lib/validators';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -28,10 +29,8 @@ export default function BERegister() {
         role: 'BUREAU_ETUDE'
       });
 
-      // Persist the token via AuthContext (gère localStorage + état global)
-      if (authRes.token) {
-        login(authRes);
-      }
+      // Persist the token via AuthContext (gère sessionStorage + état global)
+      login(authRes);
 
       // 2. Create Bureau d'Etude Profile
       await createBureauEtude({
@@ -40,7 +39,7 @@ export default function BERegister() {
         telContact: data.telContact,
         utilisateurId: authRes.userId,
         adresse: {
-          rue: data.rue || "Non renseigné",
+          rue: data.rue,
           codePostal: data.codePostal,
           ville: data.ville,
         }
@@ -119,9 +118,11 @@ export default function BERegister() {
                         error={errors.email ? "Requis" : undefined}
                       />
                       <Input
-                        label="Téléphone"
+                        label="Téléphone *"
                         type="tel"
-                        {...register('telContact')}
+                        placeholder="01 23 45 67 89"
+                        {...register('telContact', phoneRules)}
+                        error={errors.telContact ? (errors.telContact.message as string ?? 'Requis') : undefined}
                       />
                   </div>
 
@@ -147,15 +148,17 @@ export default function BERegister() {
               <div className="space-y-4 pt-4 border-t border-slate-100">
                 <h4 className="text-sm font-semibold text-slate-800">Adresse de l'entreprise</h4>
                 <Input
-                  label="Rue"
+                  label="Rue *"
                   placeholder="10 rue de la Géologie"
-                  {...register('rue')}
+                  {...register('rue', { required: true })}
+                  error={errors.rue ? "Requis" : undefined}
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Code Postal *"
-                    {...register('codePostal', { required: true })}
-                    error={errors.codePostal ? "Requis" : undefined}
+                    placeholder="Ex : 75001"
+                    {...register('codePostal', codePostalRules)}
+                    error={errors.codePostal ? (errors.codePostal.message as string) : undefined}
                   />
                   <Input
                     label="Ville *"
