@@ -1,0 +1,49 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# .dockerignore — Fichiers exclus du contexte de build Docker
+# Réduire la taille du contexte envoyé au daemon Docker et éviter
+# de copier des fichiers inutiles dans l'image.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Dépendances (reconstruites dans le conteneur)
+node_modules/
+
+# Artefacts de build
+dist/
+coverage/
+
+# Fichiers d'environnement (secrets locaux — ne jamais inclure dans une image)
+.env
+.env.local
+.env.*.local
+
+# Outils de contrôle de version
+.git/
+.gitignore
+
+# Fichiers IDE / éditeurs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Fichiers Docker eux-mêmes (inutiles dans le contexte)
+Dockerfile
+docker-compose*.yml
+docker-entrypoint.sh
+.dockerignore
+
+# Documentation / ressources non embarquées
+README.md
+BACKEND-*.md
+resources-backend/
+
+# Fichiers de test et couverture
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Fichiers de configuration CI/CD
+.github/
+sonar-project.properties
+
