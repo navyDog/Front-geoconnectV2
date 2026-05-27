@@ -51,6 +51,7 @@ sonar-scanner -Dsonar.token=<SONAR_TOKEN>
 11. [Scripts disponibles](#11-scripts-disponibles)
 12. [Tests](#12-tests)
 13. [Stack & dépendances](#13-stack--dépendances)
+14. [Déploiement Docker](#14-déploiement-docker)
 
 ---
 
@@ -383,6 +384,140 @@ npm run test:coverage
 | `@testing-library/react` | Tests composants React |
 | `@vitest/coverage-v8` | Couverture de code |
 | `jsdom` | Environnement DOM pour les tests |
+
+---
+
+## 14. Déploiement Docker
+
+L'application se déploie via un **build multi-stage** : Node.js compile le frontend, puis Nginx Alpine sert les assets statiques et agit en proxy inverse vers le backend Spring Boot.
+
+```
+ ┌──────────────────────────────────────────────────────┐
+ │  Conteneur Docker (port 80)                          │
+ │                                                      │
+ │   Navigateur → Nginx ──┬── /api/* ──► Backend :8080  │
+ │                        └── /*    ──► index.html (SPA)│
+ └──────────────────────────────────────────────────────┘
+```
+
+### Prérequis
+
+- **Docker** ≥ 24
+- **Docker Compose** ≥ 2.20 (inclus dans Docker Desktop)
+
+### Démarrage rapide
+
+```bash
+# 1. Copier et adapter le fichier de variables d'environnement
+cp .env.docker .env
+
+# 2. Éditer .env avec vos valeurs (voir section Variables ci-dessous)
+#    Au minimum : BACKEND_URL et VITE_API_URL
+
+# 3. Construire l'image et démarrer le conteneur
+docker compose --env-file .env up -d --build
+
+# L'application est accessible sur http://localhost:3000
+```
+
+### Variables d'environnement
+
+> ⚠️ **Deux variables distinctes** contrôlent l'URL du backend selon le moment où elles sont utilisées.
+
+| Variable | Moment | Rôle |
+|----------|--------|------|
+| `VITE_API_URL` | **Build** (dans `npm run build`) | URL résolue par Vite et injectée dans le bundle JS. Doit être l'URL **publique** du backend accessible depuis le navigateur. |
+| `BACKEND_URL` | **Runtime** (dans Nginx au démarrage) | URL utilisée par Nginx pour `proxy_pass /api`. Peut être une adresse réseau interne (nom de service Docker). |
+| `FRONTEND_PORT` | Runtime | Port de la machine hôte exposé (défaut : `3000`). |
+| `GEMINI_API_KEY` | Build | Clé API Gemini (optionnelle). |
+
+**Exemple `.env` avec backend dans le même réseau Docker :**
+
+```env
+# URL publique vue par le navigateur (build-time)
+VITE_API_URL=https://api.mon-domaine.fr
+
+# Adresse interne du backend dans le réseau Docker (runtime)
+BACKEND_URL=http://geoconnect-backend:8080
+
+# Port exposé sur la machine hôte
+FRONTEND_PORT=80
+```
+
+**Exemple `.env` pour développement local sans Docker backend :**
+
+```env
+VITE_API_URL=http://localhost:8080
+BACKEND_URL=http://host.docker.internal:8080
+FRONTEND_PORT=3000
+```
+
+> Sur Linux, remplacer `host.docker.internal` par l'adresse IP de l'hôte (ex: `172.17.0.1`).
+
+### Commandes utiles
+
+```bash
+# Démarrer (sans rebuild si l'image existe déjà)
+docker compose --env-file .env up -d
+
+# Forcer un rebuild complet
+docker compose --env-file .env up -d --build --force-recreate
+
+# Suivre les logs en temps réel
+docker compose logs -f frontend
+
+# Arrêter et supprimer le conteneur
+docker compose down
+
+# Arrêter, supprimer le conteneur ET l'image
+docker compose down --rmi local
+```
+
+### Build manuel (sans docker-compose)
+
+```bash
+# Construire l'image en passant les ARG de build
+docker build \
+  --build-arg VITE_API_URL=http://localhost:8080 \
+  --build-arg GEMINI_API_KEY="" \
+  -t geoconnect-frontend:latest .
+
+# Lancer le conteneur
+docker run -d \
+  -p 3000:80 \
+  -e BACKEND_URL=http://localhost:8080 \
+  --name geoconnect-frontend \
+  geoconnect-frontend:latest
+```
+
+### Fonctionnement du proxy Nginx en production
+
+En développement, le proxy est géré par Vite (`vite.config.ts`). En production Docker, **Nginx remplace entièrement ce proxy** avec un comportement identique :
+
+- Toutes les requêtes `/api/*` sont transmises vers `BACKEND_URL` (le préfixe `/api` est conservé, comme requis par le `context-path` Spring Boot).
+- Si une requête ne porte pas de header `Authorization` mais contient un cookie `pdf_token`, Nginx reconstitue automatiquement le header `Authorization: Bearer <token>` — même logique que le `proxyReq` Vite pour l'ouverture des PDF via `window.open()`.
+- Toutes les routes inconnues renvoient `index.html` pour le fonctionnement du routing React (SPA fallback).
+
+### Connecter le frontend à un backend Docker existant
+
+Si le backend tourne dans un compose séparé, connectez les deux sur le même réseau Docker :
+
+```yaml
+# Dans docker-compose.yml, décommenter la ligne :
+networks:
+  geoconnect-net:
+    external: true   # ← réseau partagé avec le backend
+```
+
+```bash
+# Créer le réseau partagé (une seule fois)
+docker network create geoconnect-net
+
+# Puis démarrer les deux stacks
+docker compose --env-file .env up -d --build
+```
+
+La variable `BACKEND_URL` doit alors pointer vers le **nom du service backend** défini dans son propre `docker-compose.yml` (ex: `http://geoconnect-backend:8080`).
 
 ---
 

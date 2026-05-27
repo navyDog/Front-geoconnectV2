@@ -1,0 +1,42 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml — Déploiement local / recette du frontend GeoConnect
+#
+# Usage :
+#   docker compose up -d --build          # Premier démarrage
+#   docker compose up -d                  # Redémarrage sans rebuild
+#   docker compose down                   # Arrêt
+#   docker compose logs -f frontend       # Suivi des logs
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # URL du backend au moment du BUILD (resolve dans Vite/axios)
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    image: geoconnect-frontend:latest
+    container_name: geoconnect-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    environment:
+      # URL du backend au moment du RUNTIME (resolve dans Nginx proxy_pass)
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8080}
+    networks:
+      - geoconnect-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  geoconnect-net:
+    name: geoconnect-net
+    # Utiliser "external: true" si le backend est dans un autre compose
+    # external: true
+
